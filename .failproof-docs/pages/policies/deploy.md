@@ -1,0 +1,188 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.befailproof.ai/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Deploy a policy
+
+> Put a tested policy version on machines in observe mode, enforce it, and confirm every machine picked it up.
+
+A deployment puts published policy versions on a machine, each with one of two effects:
+
+* **Observe** records what the policy would have done, and blocks nothing.
+* **Enforce** acts on the decision: a `deny` blocks the call and an `instruct` steers the agent.
+
+## Add a machine
+
+A machine appears under **Admin → enforcement** once it is connected to Cloud. If the one you want is not there yet:
+
+**Dashboard**
+
+1. Go to **Administration → Keys** and create a key with `policies:pull`, so the machine can receive deployments, and `events:add`, so its decisions reach Cloud.
+2. Connect the machine with that key — [Connect a machine to Cloud](https://docs.befailproof.ai/start/setup.md#connect-a-machine-to-cloud) walks through it.
+3. Confirm it shows up under **Admin → enforcement**.
+
+**CLI**
+
+On the machine:
+
+```bash theme={null}
+npm install -g failproofai
+failproofai config
+failproofai config --status
+```
+
+In a terminal, `failproofai config` asks whether to connect to Cloud and takes the key at a masked prompt. Then confirm the machine is enrolled, from anywhere, with `fp fleet list`.
+
+## Deploy in observe mode
+
+**Dashboard**
+
+1. Go to **Admin → enforcement**, find the machine, and expand its row.
+2. Select **edit**, add the tested policy version, and choose **observe**.
+3. Apply the change, then wait for the machine's next check-in and confirm its deployment and coverage state.
+4. Go to **Observe → policy** to inspect live decisions.
+
+   ![The machine deployment editor with policy versions, enforce and observe effects, and the apply deployment action.](https://mintcdn.com/exosphere/WgPwQzedeDNwJBTy/images/dashboard/enforcement-editor.png?fit=max\&auto=format\&n=WgPwQzedeDNwJBTy\&q=85\&s=264a3a1f53c025dae05c8498156aa49a)
+
+**CLI**
+
+```bash theme={null}
+fp fleet list
+fp fleet show <machine-id>
+fp fleet deploy <machine-id> --add no-force-push:observe
+```
+
+The `:observe` suffix is what makes it observe: a bare `--add no-force-push` keeps the effect the machine already has for that policy, and otherwise enforces. Switch it to enforce later with `--add no-force-push:enforce`.
+
+`deploy` **replaces the machine's whole policy set** with the result. It prints the plan, then asks before applying — but only on an interactive terminal. With `--yes`, under `fp --json`, or with stdin redirected (a CI step, a script, an agent shelling out) it applies without asking; the plan is still printed, or returned as `plan` under `--json`.
+
+On the machine, `failproofai policies` lists the Cloud-managed policies it is running and `failproofai config --status` shows its connection. Use `fp sessions --env production --since 24h` and `fp events --event-type hook_completed` to confirm its activity reaches Cloud.
+
+**1. Choose the version and machines**
+
+Pick the published version and the machines it should run on.
+
+**2. Observe**
+
+Review matches, reasons, affected tools, and false positives while nothing is blocked.
+
+**3. Enforce**
+
+Switch the effect to enforce once the observed matches separate unsafe actions from valid ones, then confirm every intended machine pulled the change and is reporting decisions.
+
+## Target an agent on a machine
+
+Published policy versions do not contain agent-routing rules. By default, an assignment
+applies to **all agents on its machine**. When deploying a version, you can instead
+target an integration (including profiles added later) or a particular profile
+reported by that machine. The choice belongs to the machine's assignment: the
+same published version can target different agents on different machines.
+
+**Dashboard**
+
+1. In **Admin → enforcement**, expand the machine and select **edit**.
+2. On the policy's **agents** control, keep **all agents**, select **all hermes profiles** (for example), or search for a reported profile by its label and `agt_` ID. You can select multiple alternatives; a call matches if it belongs to any one of them.
+3. Review the target listed for **each** assignment in the deployment plan, apply the change, then check the machine's reported deployment after its next check-in. History and rollback retain the selected targets.
+
+**CLI**
+
+```bash theme={null}
+fp fleet show <machine-id>
+fp fleet deploy <machine-id> --add no-force-push --target no-force-push=hermes
+fp fleet deploy <machine-id> --target no-force-push=hermes/agt_1234567890abcdef
+fp fleet deploy <machine-id> --all-agents no-force-push
+```
+
+`--target POLICY=INTEGRATION[/agt_ID]` sets one policy's scope. Repeat
+`--target` for more alternatives on the same assignment. Use `--all-agents POLICY`
+to clear that assignment's targeting. `fp fleet show` and `fp fleet history`
+display the selected scope. Review the complete replacement plan before
+applying, especially when deploying from a script.
+
+The machine must have recently reported support for agent targeting before you
+can set a new target. You can select an exact profile only if that machine
+reported it with a hook installed and it is not stale. If the inventory is
+temporarily unavailable, existing targets remain assigned; they are not
+silently broadened to all agents. Reinstall older shell hooks to provide the
+profile hint used by new installations. After upgrading the CLI, run
+`failproofai config` to update and restart its daemon too: an older daemon
+cannot evaluate new profile-scoped calls and the hook refuses the mismatch.
+If the running agent's profile cannot
+be identified (for example, when several settings scopes are installed but
+the hook does not report which one ran), **targeted assignments do not match**;
+unscoped policies still apply. Look for `agent_scope_unresolved` under that
+machine's policy errors.
+
+A machine reports only the agents it traces: one entry per profile whose
+config carries the FailproofAI hook (Hermes and OpenClaw get one per profile,
+named by its label). An agent CLI that is merely installed is not listed.
+
+Each machine keeps up to 256 profiles in its roster. A profile's ID never
+changes while it is listed. When the roster is full and a new profile with a
+FailproofAI hook appears (its hook runs, or its config carries the hook), the
+daemon makes room by dropping one profile that meets all of these:
+
+* it has no hook installed;
+* no assignment names it;
+* FailproofAI Cloud would not accept it as a new target.
+
+The daemon prefers a profile no longer found on the machine, then the one
+unused longest. It never drops a profile an exact target uses, so those
+targets stay valid. If no profile can be dropped, the new profile has no ID
+yet, and targeted assignments do not match it until a slot frees up.
+
+## Deploy Jev checks
+
+A Cloud policy can carry Jev checks as well as, or instead of, JavaScript. Its kind is `jev` (Jev checks only) or `both` (JavaScript whose verdict its own checks may clear). It deploys, toggles and rolls back exactly like any other policy.
+
+Jev checks run on FailproofAI Cloud; nothing is installed on the machine. The machine receives only the JavaScript of a `both` policy. While a `jev` or `both` policy is deployed to it, FailproofAI Cloud turns Jev on for the machine, and each checked tool call of an agent the policy targets goes to FailproofAI Cloud, which asks the checks deployed to that agent and returns their verdict. With none deployed, Jev is off there. There is no Jev mode to set by hand.
+
+```bash theme={null}
+fp policies publish prod-db-intent --kind jev --semantic ./checks.json
+fp fleet deploy <machine-id> --add prod-db-intent:observe
+```
+
+To trial Jev checks without them deciding anything, deploy the policy with `:observe`: its checks are asked and their answers recorded as "would have", and they neither block nor clear anything. Redeploy it as `enforce` once the policy page shows what they would have done; then Jev's checks **block** calls as well as clearing the JavaScript verdicts they review. A `both` policy deployed with `:observe` observes both halves.
+
+A `both` policy's JavaScript can be cleared only by its own checks' answers from FailproofAI Cloud. An installed pack's check of the same name never clears it. If FailproofAI Cloud cannot be reached, or sets no mode that asks, the policy stays **hard**: every deny of its JavaScript stands.
+
+Agent targeting works for Jev-only policies too. For a `both` policy, the
+assignment's one target governs **both** its local JavaScript and its Cloud Jev
+checks; a call outside that target runs neither half. Keep the
+policy at `observe` while trialing scoped checks, just as you would for an
+unscoped Jev rollout.
+
+A machine reports what stops it from asking, and `fp fleet show <machine-id>` lists it under policy errors:
+
+* `transcripts_disabled`: the machine was connected with `--no-transcripts`. Such a machine never sends tool calls to Jev.
+* `jev_unconfigured`: the machine's key does not carry Jev.
+* `jev_rate_limited`: some calls were refused for the organization's Jev rate limit and decided by the regex policies alone.
+* `jev_unavailable`: FailproofAI Cloud's Jev failed several calls in a row, so the machine skips it for a minute at a time.
+
+One Jev request carries a limited amount of question text. FailproofAI Cloud's checks come before the checks of packs installed on the machine. A pack check that does not fit is left out and reported as `jev_budget`. A pack check with the same name as one of your organization's Cloud checks is left out too, and reported as `jev_name_clash`: the Cloud check is asked in its place.
+
+## Check coverage
+
+Coverage answers whether a policy is running where the risk is.
+
+1. Go to **Admin → enforcement** and review the enforcing and observing totals.
+2. Search for a machine by ID or label, or filter for machines missing a policy.
+3. Expand a row to compare assigned policies, reported deployment, last check-in, and history.
+4. Refresh after the machine's polling interval when an applied deployment is still pending.
+
+![The Enforcement fleet showing policy coverage, machine deployment state, and observe and enforce assignments.](https://mintcdn.com/exosphere/WgPwQzedeDNwJBTy/images/dashboard/enforcement-fleet.png?fit=max\&auto=format\&n=WgPwQzedeDNwJBTy\&q=85\&s=96be13256ef7e3fa89eeefcc4f1b7f10)
+
+Look for machines that never pulled the latest deployment, enrolled machines that stopped reporting, a policy assigned to the wrong environment, and version drift after an interrupted update.
+
+Label machines by workload and environment — hostnames alone rarely survive autoscaling or replacement:
+
+```bash theme={null}
+failproofai config --machine-label checkout-runner-03
+```
+
+> [!WARNING]
+>
+> Enforcement management is an administrative Cloud workflow. Do not treat root-only enforcement routes as ordinary customer `/v1` API endpoints.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

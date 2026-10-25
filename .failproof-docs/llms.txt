@@ -1,0 +1,140 @@
+# Failproof AI
+
+> Trace agent behavior, find failures with audits, and prevent repeat failures with deployed policies.
+
+- [Integrations and reference (127 pages)](https://docs.befailproof.ai/_llms/en/integrations-and-reference.txt): Documentation for Integrations and reference.
+
+## Start
+
+### Start here
+
+- [Make your agent failproof](https://docs.befailproof.ai/index.md): Observability and enforcement for every harness your agents run in — coding CLIs, chat gateways, self-hosted assistants, and your own instrumented agents.
+- [Quickstart](https://docs.befailproof.ai/start/quickstart.md): Capture an agent session, find a failure, and start preventing it.
+- [Agent harnesses](https://docs.befailproof.ai/reference/harnesses.md): Capture sessions and enforce policies across all 12 supported agent harnesses.
+- [Failproof Assistant](https://docs.befailproof.ai/sessions/assistant.md): Analyze and operate Failproof AI in natural language, from questions and queries to dashboards and audits.
+- [Run your first failure check](https://docs.befailproof.ai/start/first-audit.md): Create an audit from the Cloud dashboard or the fp CLI and review its first findings.
+- [Prevent your first failure with a policy](https://docs.befailproof.ai/start/first-policy.md): Author a policy version, deploy it in observe mode, and then enforce it.
+- [Choose your setup](https://docs.befailproof.ai/start/setup.md): Choose local enforcement, Failproof AI Cloud, or an enterprise deployment.
+- [Core concepts](https://docs.befailproof.ai/start/concepts.md): The small set of concepts used throughout Failproof AI.
+- [Use Jev](https://docs.befailproof.ai/start/use-jev.md): Set up Jev evaluations for finished sessions or Jev policies for live tool-call review.
+
+#### Starter templates
+
+- [Custom agents](https://docs.befailproof.ai/start/quickstarts/custom-agents.md): Wrap your agent in three `with` blocks and it starts recording.
+- [LangChain and LangGraph](https://docs.befailproof.ai/start/quickstarts/langchain.md): Install, instrument, and see your first trace.
+- [CrewAI](https://docs.befailproof.ai/start/quickstarts/crewai.md): Install, instrument, and see your first trace.
+- [LlamaIndex](https://docs.befailproof.ai/start/quickstarts/llamaindex.md): Install, instrument, and see your first trace.
+- [Pydantic AI](https://docs.befailproof.ai/start/quickstarts/pydantic-ai.md): Install, instrument, and see your first trace.
+
+## Trace Agents
+
+### Understand every run
+
+- [Sessions](https://docs.befailproof.ai/sessions/overview.md): Start with the complete record of one agent run.
+- [Live events](https://docs.befailproof.ai/sessions/live-events.md): Watch agent activity arrive while a session is running.
+- [Read a trace](https://docs.befailproof.ai/sessions/read-a-trace.md): Find the event that changed the course of an agent session.
+- [Models](https://docs.befailproof.ai/sessions/models.md): Compare model latency, tokens, context use, and traffic distribution.
+- [Hooks](https://docs.befailproof.ai/sessions/hooks.md): Measure hook activity, triggers, and latency separately from policy outcomes.
+- [Policy decisions](https://docs.befailproof.ai/sessions/policy-decisions.md): See what policies evaluated, blocked, instructed, or allowed.
+- [Tools](https://docs.befailproof.ai/sessions/tools.md): Find slow, failing, or overused tools across agent sessions.
+- [Errors](https://docs.befailproof.ai/sessions/errors.md): Group repeated errors and open the sessions behind them.
+- [Metrics](https://docs.befailproof.ai/sessions/metrics.md): Plot magnitude metrics such as latency, cost, and token use.
+- [Dashboards](https://docs.befailproof.ai/sessions/dashboards.md): Track the reliability signals that matter to an agent or workflow.
+- [Queries](https://docs.befailproof.ai/sessions/queries.md): Explore session, event, and evaluation data with reusable SQL.
+
+### Plug in your agent
+
+- [Instrument your agent](https://docs.befailproof.ai/start/integrations.md): Connect any supported agent framework to Failproof AI with one call.
+- [OpenTelemetry](https://docs.befailproof.ai/agenteye/opentelemetry.md): Send coding-agent and application telemetry to FailproofAI Cloud with OTLP.
+- [Custom agents](https://docs.befailproof.ai/start/integrations/custom-agents.md): Instrument an agent you wrote yourself, or a framework without an adapter.
+- [LangChain and LangGraph](https://docs.befailproof.ai/start/integrations/langchain.md): Instrument graphs, nodes, tools, retrievers, and model calls with one call.
+- [CrewAI](https://docs.befailproof.ai/start/integrations/crewai.md): Instrument crews, flows, agents by role, tools, memory, and human feedback.
+- [LlamaIndex](https://docs.befailproof.ai/start/integrations/llamaindex.md): Instrument workflows, steps, function agents, and retrievers.
+- [Pydantic AI](https://docs.befailproof.ai/start/integrations/pydantic-ai.md): Instrument typed agents, tools, model calls, and retries.
+
+## Find failures
+
+### Evaluate agents
+
+- [Evaluate agents](https://docs.befailproof.ai/evaluations/overview.md): Score every finished session with evaluations you define: hosted Python checks, or LLM judges in your own worker.
+- [Write an evaluation](https://docs.befailproof.ai/evaluations/write.md): Describe what to measure and let the assistant draft a hosted Python evaluation, or write the code yourself.
+- [LLM judges](https://docs.befailproof.ai/evaluations/judge.md): Score sessions on things code cannot measure — correctness, tone, whether the agent followed a policy — by describing what good looks like and letting a model read the conversation.
+- [Jev evaluations](https://docs.befailproof.ai/evaluations/jev.md): Use Jev to score a finished session against a question with known answers.
+- [Test an evaluation](https://docs.befailproof.ai/evaluations/test.md): Run an evaluation against your real sessions before deploying it. Nothing is stored.
+- [Deploy and version an evaluation](https://docs.befailproof.ai/evaluations/deploy.md): Deploy an immutable version, see what is live, publish new versions, roll back, and score sessions you already have.
+- [Read evaluation results](https://docs.befailproof.ai/sessions/evaluations.md): Chart evaluation scores over time, compare agents and environments, see why a session scored low, and ask the assistant.
+
+### Find and manage failures
+
+- [Sentiment analysis](https://docs.befailproof.ai/sessions/sentiment.md): Find frustrated, confused, and corrective messages with Jev sentiment scores.
+- [Audits](https://docs.befailproof.ai/audits/overview.md): Review a defined population of sessions for failures that traces alone will not reveal.
+- [Audit local agent history](https://docs.befailproof.ai/audits/local-audit.md): Scan supported agent CLI histories offline and review risky or wasteful behavior locally.
+- [Set up an audit](https://docs.befailproof.ai/audits/setup.md): Define an audit goal, session population, and evidence context.
+- [Agent context](https://docs.befailproof.ai/audits/agent-contracts.md): Tell audits what each agent must do, produce, and never do.
+- [Run and review an audit](https://docs.befailproof.ai/audits/run.md): Run an audit, verify its coverage, and inspect the resulting findings.
+- [Audit cadence](https://docs.befailproof.ai/audits/cadence.md): Choose when recurring audits run and how much data they review.
+- [Findings and issues](https://docs.befailproof.ai/audits/findings-and-issues.md): Turn audit evidence into owned, trackable remediation work.
+- [Alerts](https://docs.befailproof.ai/audits/alerts.md): Detect recurrence and route an incident to the right responders.
+- [Audit recipes](https://docs.befailproof.ai/audits/recipes.md): Starting goals for common agent failure investigations.
+
+## Prevent failures
+
+### Prevent repeat failures
+
+- [Policies](https://docs.befailproof.ai/policies/overview.md): Observe, guide, or block agent actions before a known failure repeats.
+- [Jev policies](https://docs.befailproof.ai/policies/jev.md): Add Jev's live review to gated tool calls, then inspect it before enforcing its decisions.
+
+### Get a policy
+
+- [Policy authority](https://docs.befailproof.ai/policies/authority.md): Which policy verdicts the Jev semantic evaluator may clear, and which are final.
+- [Write a policy](https://docs.befailproof.ai/policies/editor.md): Let Failproof AI draft a policy from an audit finding, or write the source yourself, then review, test, and publish it.
+- [Use a policy pack](https://docs.befailproof.ai/policies/packs.md): Plug in a Failproof AI policy pack for your use case, or a community pack from the policy hub, and choose what it enforces.
+
+### Ship a policy
+
+- [Test a policy](https://docs.befailproof.ai/policies/test.md): Backtest a draft against traffic you already have, and prove it stops what it should and allows what it must, before any machine enforces it.
+- [Deploy a policy](https://docs.befailproof.ai/policies/deploy.md): Put a tested policy version on machines in observe mode, enforce it, and confirm every machine picked it up.
+- [Versions and rollback](https://docs.befailproof.ai/policies/rollback.md): Every publish is an immutable version, so a rollout that disrupts valid agent work is undone by redeploying the last good one.
+- [Publish a policy pack](https://docs.befailproof.ai/policies/publish-a-pack.md): Ship your own policies as a GitHub release that anyone can install.
+- [Failure behavior](https://docs.befailproof.ai/policies/failure-behavior.md): Understand what happens when policy evaluation or the local daemon is unavailable.
+
+## Admin
+
+### Operate Failproof AI
+
+- [Administration](https://docs.befailproof.ai/admin/overview.md): Operate access, usage, organizations, and security without mixing them into the reliability workflow.
+- [Usage](https://docs.befailproof.ai/admin/usage.md): Inspect organization consumption and the active billing window.
+- [Keys and permissions](https://docs.befailproof.ai/admin/keys-and-permissions.md): Create scoped API keys for machines, automation, and operators.
+- [Users and organizations](https://docs.befailproof.ai/admin/users-and-organizations.md): Control membership and keep each organization's data and actions scoped.
+- [Settings and security](https://docs.befailproof.ai/admin/settings-and-security.md): Configure operational settings and make deliberate choices about agent data.
+
+## OpenAPI Specs
+
+- [openapi](/reference/openapi.json)
+
+## Optional
+
+- [Support](mailto:support@befailproof.ai)
+
+> The links below point to documentation indexes. Follow each `/_llms/` index recursively until you reach documentation pages.
+
+## Indexes
+
+- [English / Integrations and reference (127 pages)](https://docs.befailproof.ai/_llms/en/integrations-and-reference.txt): Documentation for English / Integrations and reference.
+- [Chinese (69 pages)](https://docs.befailproof.ai/_llms/zh.txt): Documentation for Chinese.
+- [Japanese (69 pages)](https://docs.befailproof.ai/_llms/ja.txt): Documentation for Japanese.
+- [Korean (69 pages)](https://docs.befailproof.ai/_llms/ko.txt): Documentation for Korean.
+- [Spanish (69 pages)](https://docs.befailproof.ai/_llms/es.txt): Documentation for Spanish.
+- [Brazilian Portuguese (69 pages)](https://docs.befailproof.ai/_llms/pt-br.txt): Documentation for Brazilian Portuguese.
+- [German (69 pages)](https://docs.befailproof.ai/_llms/de.txt): Documentation for German.
+- [French (69 pages)](https://docs.befailproof.ai/_llms/fr.txt): Documentation for French.
+- [Russian (69 pages)](https://docs.befailproof.ai/_llms/ru.txt): Documentation for Russian.
+- [Hindi (69 pages)](https://docs.befailproof.ai/_llms/hi.txt): Documentation for Hindi.
+- [Turkish (69 pages)](https://docs.befailproof.ai/_llms/tr.txt): Documentation for Turkish.
+- [Vietnamese (69 pages)](https://docs.befailproof.ai/_llms/vi.txt): Documentation for Vietnamese.
+- [Italian (69 pages)](https://docs.befailproof.ai/_llms/it.txt): Documentation for Italian.
+- [Arabic (69 pages)](https://docs.befailproof.ai/_llms/ar.txt): Documentation for Arabic.
+- [Hebrew (69 pages)](https://docs.befailproof.ai/_llms/he.txt): Documentation for Hebrew.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

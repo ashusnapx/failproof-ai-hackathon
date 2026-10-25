@@ -1,0 +1,147 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.befailproof.ai/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# List issues.
+
+> The whole issues board in one feed: issues opened by an alert rule, issues
+graduated from an audit finding, and issues opened by hand. Newest first.
+
+`state` defaults to `firing,acknowledged`, so resolved issues are hidden
+until you ask for them. Unrecognised states are dropped rather than
+rejected — `?state=closed` returns `[]`, not an error. `limit` defaults to
+200 and is capped at 1000; there is no cursor, so narrow with `state` or
+`alert_id` instead of paging. Cached for 10 seconds.
+
+
+
+## OpenAPI
+
+````yaml /reference/openapi.json get /issues
+openapi: 3.1.0
+info:
+  title: AgentEye API
+  description: >-
+    The AgentEye observability API.
+
+
+    Every path below is relative to `/v1` on your deployment's dashboard origin
+    — e.g. `https://app.example.com/v1/sessions`. Authenticate with a scoped API
+    key as a bearer token.
+
+
+    Organization scoping: a key belongs to one organization and acts on it
+    automatically. An instance-scoped key selects one per request with the
+    `X-AgentEye-Org` header; without it, such a key resolves to the default
+    organization, so set it explicitly on a multi-org deployment.
+  license:
+    name: MIT
+    identifier: MIT
+  version: 0.0.1-beta.77
+servers:
+  - url: https://app.befailproof.ai/v1
+    description: Failproof AI Cloud
+security:
+  - api_key: []
+tags:
+  - name: Events
+    description: Ingest and query the event store.
+  - name: Sessions
+    description: Agent sessions and their evaluations.
+  - name: Evaluations
+    description: Evaluation results and re-runs.
+  - name: Dashboards
+    description: Dashboards and their tiles.
+  - name: Queries
+    description: Saved SQL and ad-hoc query execution.
+  - name: Keys
+    description: Mint and manage scoped API keys.
+  - name: Users
+    description: Dashboard members and access.
+  - name: Settings
+    description: Operational settings and context-window overrides.
+  - name: Permission sets
+    description: Named permission roles.
+  - name: Alerts
+    description: Alert rules and their recipients.
+  - name: Issues
+    description: Open, triage, assign and resolve issues.
+  - name: Audits
+    description: Recurring audits and their findings.
+  - name: Usage
+    description: Organization usage and billing windows.
+  - name: Health
+    description: Liveness.
+  - name: Auth
+    description: Describe the key you are calling with.
+paths:
+  /issues:
+    get:
+      tags:
+        - Issues
+      summary: List issues.
+      description: >-
+        The whole issues board in one feed: issues opened by an alert rule,
+        issues
+
+        graduated from an audit finding, and issues opened by hand. Newest
+        first.
+
+
+        `state` defaults to `firing,acknowledged`, so resolved issues are hidden
+
+        until you ask for them. Unrecognised states are dropped rather than
+
+        rejected — `?state=closed` returns `[]`, not an error. `limit` defaults
+        to
+
+        200 and is capped at 1000; there is no cursor, so narrow with `state` or
+
+        `alert_id` instead of paging. Cached for 10 seconds.
+      operationId: list_incidents
+      parameters:
+        - name: state
+          in: query
+          description: >-
+            Comma-separated states from `firing`, `acknowledged`, `resolved`.
+            Default `firing,acknowledged`.
+          required: false
+          schema:
+            type: string
+        - name: alert_id
+          in: query
+          description: Only issues belonging to this alert.
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Default 200, capped at 1000.
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Matching issues, newest first.
+        '401':
+          description: Missing, unknown, or disabled key.
+        '403':
+          description: The key lacks `issues:read`.
+      security:
+        - api_key: []
+components:
+  securitySchemes:
+    api_key:
+      type: http
+      scheme: bearer
+      description: >-
+        A scoped AgentEye API key. Mint one in the dashboard under Settings →
+        API keys, or with `POST /v1/keys`. Each endpoint names the permission it
+        requires; a key without it gets 403 and a `required_permission` field
+        naming what was missing.
+
+````
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

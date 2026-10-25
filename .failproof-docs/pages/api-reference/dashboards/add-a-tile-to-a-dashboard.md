@@ -1,0 +1,180 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.befailproof.ai/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Add a tile to a dashboard.
+
+> A tile renders exactly one saved query: `query_id` names it, `chart_type`
+is one of `line`, `area`, `bar`, `stacked_bar`, `pie`, `kpi` or `table`, and
+`pos_x` / `pos_y` / `pos_w` / `pos_h` place it on the grid (origin
+top-left, width and height in grid cells). `chart_config` and
+`param_bindings` are opaque JSON objects the dashboard UI owns; both
+default to `{}`.
+
+The saved query must be one of your organization's — a `query_id` from
+anywhere else reads as "does not exist".
+
+
+
+## OpenAPI
+
+````yaml /reference/openapi.json post /dashboards/{id}/tiles
+openapi: 3.1.0
+info:
+  title: AgentEye API
+  description: >-
+    The AgentEye observability API.
+
+
+    Every path below is relative to `/v1` on your deployment's dashboard origin
+    — e.g. `https://app.example.com/v1/sessions`. Authenticate with a scoped API
+    key as a bearer token.
+
+
+    Organization scoping: a key belongs to one organization and acts on it
+    automatically. An instance-scoped key selects one per request with the
+    `X-AgentEye-Org` header; without it, such a key resolves to the default
+    organization, so set it explicitly on a multi-org deployment.
+  license:
+    name: MIT
+    identifier: MIT
+  version: 0.0.1-beta.77
+servers:
+  - url: https://app.befailproof.ai/v1
+    description: Failproof AI Cloud
+security:
+  - api_key: []
+tags:
+  - name: Events
+    description: Ingest and query the event store.
+  - name: Sessions
+    description: Agent sessions and their evaluations.
+  - name: Evaluations
+    description: Evaluation results and re-runs.
+  - name: Dashboards
+    description: Dashboards and their tiles.
+  - name: Queries
+    description: Saved SQL and ad-hoc query execution.
+  - name: Keys
+    description: Mint and manage scoped API keys.
+  - name: Users
+    description: Dashboard members and access.
+  - name: Settings
+    description: Operational settings and context-window overrides.
+  - name: Permission sets
+    description: Named permission roles.
+  - name: Alerts
+    description: Alert rules and their recipients.
+  - name: Issues
+    description: Open, triage, assign and resolve issues.
+  - name: Audits
+    description: Recurring audits and their findings.
+  - name: Usage
+    description: Organization usage and billing windows.
+  - name: Health
+    description: Liveness.
+  - name: Auth
+    description: Describe the key you are calling with.
+paths:
+  /dashboards/{id}/tiles:
+    post:
+      tags:
+        - Dashboards
+      summary: Add a tile to a dashboard.
+      description: >-
+        A tile renders exactly one saved query: `query_id` names it,
+        `chart_type`
+
+        is one of `line`, `area`, `bar`, `stacked_bar`, `pie`, `kpi` or `table`,
+        and
+
+        `pos_x` / `pos_y` / `pos_w` / `pos_h` place it on the grid (origin
+
+        top-left, width and height in grid cells). `chart_config` and
+
+        `param_bindings` are opaque JSON objects the dashboard UI owns; both
+
+        default to `{}`.
+
+
+        The saved query must be one of your organization's — a `query_id` from
+
+        anywhere else reads as "does not exist".
+      operationId: create_tile
+      parameters:
+        - name: id
+          in: path
+          description: Dashboard the tile is added to.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertTileRequest'
+        required: true
+      responses:
+        '201':
+          description: The created tile.
+        '401':
+          description: Missing, unknown, or disabled key.
+        '403':
+          description: The key lacks `dashboards:write`.
+        '404':
+          description: >-
+            The dashboard or the referenced saved query does not exist in this
+            organization.
+        '422':
+          description: >-
+            Unknown `chart_type`, `chart_config`/`param_bindings` is not a JSON
+            object, or the position is negative / the size is not positive.
+      security:
+        - api_key: []
+components:
+  schemas:
+    UpsertTileRequest:
+      type: object
+      required:
+        - query_id
+        - chart_type
+        - pos_x
+        - pos_y
+        - pos_w
+        - pos_h
+      properties:
+        chart_config: {}
+        chart_type:
+          type: string
+        param_bindings: {}
+        pos_h:
+          type: integer
+          format: int32
+        pos_w:
+          type: integer
+          format: int32
+        pos_x:
+          type: integer
+          format: int32
+        pos_y:
+          type: integer
+          format: int32
+        query_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+  securitySchemes:
+    api_key:
+      type: http
+      scheme: bearer
+      description: >-
+        A scoped AgentEye API key. Mint one in the dashboard under Settings →
+        API keys, or with `POST /v1/keys`. Each endpoint names the permission it
+        requires; a key without it gets 403 and a `required_permission` field
+        naming what was missing.
+
+````
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
