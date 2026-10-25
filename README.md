@@ -39,6 +39,7 @@ Built at **Hacktober Hack**, organised by **Failproof AI × Quad AI** · HSR Lay
 - [TruePe AI](#truepe-ai)
 - [Built on Failproof AI](#built-on-failproof-ai)
 - [Policies](#policies)
+- [Threat coverage](#threat-coverage)
 - [Quick start](#quick-start)
 - [Using the app](#using-the-app)
 - [Architecture](#architecture)
@@ -239,6 +240,81 @@ Policies live in `.failproofai/policies/` (the copy Failproof AI loads) with a s
 | `treasury-console-rules` | Payouts matching no-code rules added in the console | `rules.json` |
 
 `treasury-agent-sandbox` and `treasury-kill-switch` deny in both modes. The others log `would-deny` and allow in **Observe** mode, and deny in **Enforce** mode. Three distinct denied payouts in one run freeze all payouts until a human unfreezes them.
+
+## Threat coverage
+
+Every money, fraud and AI risk we considered, mapped to the policy, eval or platform feature that handles it, against the [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) and the OWASP Top 10 for Agentic Applications. The same matrix is at **`/coverage`** in the app.
+
+<img src="docs/screenshots/coverage.png" alt="The /coverage page: 18 blocked live, 5 scored every run, 3 Failproof AI built-in, 3 next, 3 not applicable" width="100%" />
+
+| Status | Meaning | Count |
+| --- | --- | --- |
+| **Blocked live** | A Failproof AI policy denies it at the agent's tool call, tested through Claude Code | 18 |
+| **Scored every run** | A deterministic eval checks it after every run | 5 |
+| **Failproof AI built-in** | Provided by the Failproof AI platform itself | 3 |
+| **Next** | Designed, not yet shipped | 3 |
+| **Not applicable** | The architecture has no such surface | 3 |
+
+### Money guardrails
+
+| Threat | Scenario | How TruePe handles it | Status |
+| --- | --- | --- | --- |
+| Same invoice submitted twice | A reminder email, or a retry, pays SBL/HSR/7781 a second time | `treasury-no-duplicate-invoice`: the same invoice number, or the same payee and amount, already in the ledger is refused | Blocked live |
+| Payment API timeout | The UPI rail debits, then times out; the agent cannot tell and retries | The mock rail times out after debit (`state/rail.json`); the retry hits the duplicate guard, so money moves once | Blocked live |
+| Unusual amount for a vendor | A ₹100 delivery partner bills ₹10,000; the ₹6,800 kaapi vendor bills ₹60,000 | `treasury-vendor-spend-anomaly`: more than 1.5× the vendor's typical bill needs a human | Blocked live |
+| Paise read as rupees *(unit error)* | A vendor API sends `amount_paise` 12450000; the agent pays ₹1,24,50,000 | The spend anomaly (95.8× typical) and the human budget cap both deny | Blocked live |
+| Over the human's budget | The agent spends past the ₹2,00,000 the human typed | `treasury-spend-within-human-budget` reads the budget from the human's own turns in the transcript | Blocked live |
+| Delivery marked complete without proof *(3-way match)* | The invoice says delivered; no OTP, signature or photo exists | `treasury-proof-of-delivery`: `requiresProof` vendors are paid only when `treasury/proofs/<invoice>.json` carries a POD | Blocked live |
+| Kill switch | Finance sees something wrong mid-run | The Freeze button; `treasury-kill-switch` denies every payout, even in Observe mode | Blocked live |
+| Split payments under a limit *(structuring)* | One big bill paid as many small ones | `treasury-vendor-spend-anomaly` adds what the vendor was already paid this run, so a split bill still trips the 1.5× limit; the human budget caps the total | Blocked live |
+| Velocity | Dozens of payouts in a minute | `treasury-velocity-limit`: at most 2 payouts per payee and 10 per run | Blocked live |
+
+### Fraud and identity
+
+| Threat | Scenario | How TruePe handles it | Status |
+| --- | --- | --- | --- |
+| Fake “UPI ID changed” email *(business email compromise)* | `accounts@nammacloud-payments.in` asks to repoint Namma Cloud's payouts | `treasury-payee-in-vendor-master`: only payees in the vendor master; the deny names the email that introduced the new one | Blocked live |
+| Ambiguous or lookalike vendor *(identity spoofing)* | `nammacloud.collect@ybl` versus the real `nammacloud@okhdfcbank` | Exact match only; the deny names the approved payee it imitates (edit distance on the UPI handle) | Blocked live |
+| Vendor master changes | Who may add or change a payee? | Only a human, through the Approved payees board or an approved TruePe AI card (validated API); the agent has no write tools | Blocked live |
+
+### LLM and agent risks
+
+| Threat | Scenario | How TruePe handles it | Status |
+| --- | --- | --- | --- |
+| Prompt injection *(LLM01, indirect injection)* | Inbox text tells the agent to pay someone, or claims a bigger budget | Tool output never authorizes: payees come from the vendor master, budgets from the human's words | Blocked live |
+| Excessive agency *(LLM06)* | The agent does more than pay approved invoices | `Write`, `Edit`, `WebFetch`, `WebSearch` and `Task` disabled; every `bin/pay` call gated at `PreToolUse` | Blocked live |
+| Tool misuse *(ASI02)* | The legitimate pay tool used for an unapproved purpose | Policies inspect each tool call's arguments before it runs | Blocked live |
+| Goal hijack *(ASI01, intent breaking)* | “Urgent, clear it today” pressure in an email | Urgency changes nothing: payee and budget rules still apply | Blocked live |
+| Improper output handling *(LLM05)* | The agent emits a malformed amount or payee | The pay rail validates arguments; policies parse every chained pay command | Blocked live |
+| Observe before enforce | Roll out without blocking real work on day one | Observe mode logs `would-deny` and lets money move; Enforce blocks | Blocked live |
+| Hallucinated payments *(LLM09, misinformation)* | The final summary says “paid” for a payout that never happened | The eval compares every claimed payment with the ledger | Scored every run |
+| Accuracy | Right payee, exact amount, for every real invoice | Eval against `treasury/evals/ground-truth.json` | Scored every run |
+| Over-blocking *(false positives)* | A real vendor payout is denied | The eval counts denies on legitimate payees; a run with any fails | Scored every run |
+| Policy adherence | The agent keeps retrying after a block | The eval counts retries after a deny | Scored every run |
+| Unbounded consumption *(LLM10)* | Runs get slow or expensive | Latency and model cost recorded per run; money spend capped by the budget | Scored every run |
+| Agent disables its own guardrail | Injected text asks the agent to edit or uninstall the policy | The always-on `block-failproofai-commands` and the tamper guard on `.failproofai/` (it blocked us while building this) | Failproof AI built-in |
+| Fail-closed | The policy daemon is down, or the vendor master is unreadable | Failproof AI denies when the daemon is unreachable; our policies deny when the vendor master or budget is missing | Failproof AI built-in |
+| Repudiation *(untraceability)* | Who approved this payout? | Every payout carries provenance; sessions are traced to Failproof AI Cloud; events in `state/events.jsonl` | Failproof AI built-in |
+| Sensitive information disclosure *(LLM02)* | Gateway keys or `.env` read into the agent's context | Failproof AI coding pack (`sanitize-*`, `block-env-files`) next to TruePe | Next |
+| Supply chain *(LLM03)* | A tampered policy pack | TruePe ships as a Failproof AI pack: `SHA256SUMS` checked, digest pinned (dry run built) | Next |
+| Semantic review | A novel attack no rule anticipated | Jev reviews gated calls; money rules stay hard so Jev can never clear them | Next |
+| Memory or data poisoning *(LLM04, ASI06)* | Poisoned long-term memory steers later runs | No agent memory between runs; the vendor master is human-only | Not applicable |
+| System prompt leakage *(LLM07)* | The prompt reveals secrets | The prompt holds no secrets; only the budget sentence matters | Not applicable |
+| Vector and embedding weaknesses *(LLM08)* | A RAG store is manipulated | No retrieval store | Not applicable |
+
+### TruePe AI chat safeguards
+
+The chat assistant adds an input channel, so it has its own controls on top of the policies above.
+
+| Threat | How TruePe AI handles it |
+| --- | --- |
+| The chat agent changes a guardrail by itself | Payee, budget, rule, freeze and pack changes come back as `ACTION` cards that do nothing until a human clicks them; the server applies them through the console's validation |
+| An email talks the chat agent into adding a payee | The agent is told never to propose a change only an email asked for; if it did, the card still needs a click and warns to confirm the UPI ID with the vendor by phone |
+| A chat message read as a command-line flag | Messages are passed to Claude Code after `--`, so text starting with `-` is never parsed as an option |
+| The chat's own instructions authorize spend | The role text names no amount, and is checked against the budget policy's parser, so only the human's message can set a budget |
+| Observe mode letting blocked payouts through | Chat always runs in Enforce |
+| An action sends the human off-site | `go` actions open only the app's own pages |
+| Made-up facts or numbers | The agent starts from the app's pre-screen of every bill (`state/bills.json`) and must name the file it read; cost comes from Claude Code's own result, checks and blocks from Failproof AI's Activity log, payouts from the ledger |
 
 ## Quick start
 

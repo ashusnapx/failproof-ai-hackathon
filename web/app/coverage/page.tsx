@@ -25,8 +25,8 @@ const SECTIONS: { title: string; rows: Row[] }[] = [
       { threat: "Over the human's budget", scenario: "Agent spends past the ₹2,00,000 the human typed.", control: "treasury-spend-within-human-budget reads the budget from the human's own turns in the transcript.", status: "live" },
       { threat: "Delivery marked complete without proof", term: "3-way match", scenario: "Invoice says delivered; no OTP, signature or photo exists.", control: "treasury-proof-of-delivery: vendors with requiresProof are paid only with treasury/proofs/<invoice>.json carrying a POD.", status: "live" },
       { threat: "Kill switch", scenario: "Finance sees something wrong mid-run.", control: "Freeze button; treasury-kill-switch denies every payout, even in observe mode.", status: "live" },
-      { threat: "Split payments under a limit", term: "structuring", scenario: "One big bill paid as many small ones.", control: "Total spend is capped by the human budget; explicit split detection is next.", status: "next" },
-      { threat: "Velocity", scenario: "Dozens of payouts in a minute.", control: "Rate limit per payee and per run.", status: "next" },
+      { threat: "Split payments under a limit", term: "structuring", scenario: "One big bill paid as many small ones.", control: "treasury-vendor-spend-anomaly adds what the vendor was already paid this run, so a split bill still trips the 1.5x limit; the human budget caps the total.", status: "live" },
+      { threat: "Velocity", scenario: "Dozens of payouts in a minute.", control: "treasury-velocity-limit: at most 2 payouts per payee and 10 per run.", status: "live" },
     ],
   },
   {
