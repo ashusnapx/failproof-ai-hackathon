@@ -1,0 +1,125 @@
+/* Console drawer on /live: budgets, payment rules, Failproof AI packs, custom policies. Classes start with cx- so
+   nothing here collides with the feed or tab styles in live.css. Uses the /live tokens (.A). */
+.cx-wrap { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: flex-end; background: rgba(22, 22, 26, .32); animation: cx-fade .2s ease-out; }
+@keyframes cx-fade { from { opacity: 0; } }
+.cx { display: grid; grid-template-rows: auto minmax(0, 1fr); width: min(760px, 94vw); height: 100%; background: var(--bg); box-shadow: -20px 0 40px -20px rgba(0, 0, 0, .35); animation: cx-in .28s var(--ease-out); }
+@keyframes cx-in { from { translate: 40px 0; opacity: .4; } }
+.cx-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
+.cx-tabs { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.cx-tabs button { height: 36px; padding: 0 14px; border: 0; border-radius: 10px; background: none; color: var(--muted); font: 600 14px var(--font-body); cursor: pointer; }
+.cx-tabs button:hover { background: var(--hover); }
+.cx-tabs button[aria-selected="true"] { background: var(--text); color: #fff; }
+.cx-x { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: var(--hover); color: var(--text); cursor: pointer; }
+.cx-body { overflow-y: auto; padding: 18px 20px 28px; }
+.cx-lede { margin: 0 0 14px; font-size: 14px; color: var(--muted); }
+.cx-lede b { color: var(--text); }
+.cx-lede a { color: var(--text); font-weight: 600; }
+.cx-warn { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #f0d796; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: 13px; }
+.cx code, .cx-warn code { font: 500 12px var(--font-data); }
+.cx-err { margin: 8px 0 0; color: var(--bad); font-size: 13px; font-weight: 600; }
+.cx button { font-family: var(--font-body); }
+.cx input, .cx select { min-width: 0; height: 32px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--text); font: 500 13.5px var(--font-body); }
+.cx input:focus, .cx select:focus { border-color: var(--text); outline: none; }
+.cx input[type="checkbox"], .cx input[type="radio"] { height: auto; accent-color: var(--text); }
+.cx-icon { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: var(--hover); color: var(--text); cursor: pointer; }
+.cx-icon:hover { background: #e4e2dc; }
+
+/* budgets */
+.cx-group { display: grid; gap: 8px; margin-bottom: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.cx-group.loose { border-style: dashed; }
+.cx-ghead { display: flex; align-items: center; gap: 8px; }
+.cx-gname { flex: 1; font-weight: 700 !important; font-size: 15px !important; }
+.cx-cap { display: inline-flex; align-items: center; gap: 2px; height: 32px; padding-left: 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font: 600 13px var(--font-data); }
+.cx-cap input { width: 104px; height: 30px; border: 0; padding: 0 8px 0 2px; font: 600 13px var(--font-data); }
+.cx-bar { position: relative; height: 22px; overflow: hidden; border-radius: 7px; background: var(--hover); }
+.cx-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 7px; background: #b9dfc8; transition: width .4s var(--ease-out); }
+.cx-bar.near i { background: #f3d58a; }
+.cx-bar.over i { background: #f2a9b2; }
+.cx-bar span { position: relative; padding: 0 8px; font: 600 11.5px/22px var(--font-data); color: var(--text); }
+.cx-bar.none { background: none; }
+.cx-bar.none span { padding: 0; color: var(--muted); }
+.cx-vendor { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; grid-template-areas: "who group cap" "bar bar bar"; align-items: center; gap: 6px 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.cx-vendor .cx-who { grid-area: who; display: grid; min-width: 0; }
+.cx-vendor .cx-who b { overflow: hidden; font-size: 13.5px; text-overflow: ellipsis; white-space: nowrap; }
+.cx-vendor .cx-who code { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.cx-vendor select { grid-area: group; }
+.cx-vendor .cx-cap { grid-area: cap; }
+.cx-vendor .cx-bar { grid-area: bar; height: 18px; }
+.cx-vendor .cx-bar span { line-height: 18px; }
+.cx-empty { margin: 0; font-size: 12.5px; color: var(--muted); }
+.cx-add { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px dashed var(--muted); border-radius: 10px; background: none; color: var(--text); font-weight: 600; cursor: pointer; }
+.cx-save { position: sticky; bottom: -28px; display: flex; align-items: center; gap: 8px; margin: 14px -20px -28px; padding: 12px 20px; border-top: 1px solid var(--line); background: var(--card); }
+.cx-save span { flex: 1; font-size: 13px; color: var(--muted); }
+.cx-save span b { color: var(--bad); }
+.cx-save.inline { position: static; margin: 4px 0 0; padding: 0; border: 0; background: none; justify-content: flex-end; }
+.cx-save button, .cx-run button, .cx-pack button { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.cx button.primary { border-color: var(--text); background: var(--text); color: #fff; }
+.cx button:disabled { opacity: .55; cursor: not-allowed; }
+
+/* rules */
+.cx-rule { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto auto; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.cx-rule.off { opacity: .6; }
+.cx-rtext { display: grid; min-width: 0; }
+.cx-rtext b { font-size: 14px; }
+.cx-rtext small { font-size: 12.5px; color: var(--muted); }
+.cx-act { padding: 2px 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.cx-act.block { background: var(--bad-bg); color: var(--bad); }
+.cx-act.warn { background: var(--warn-bg); color: var(--warn); }
+.cx-hits { font: 600 12px var(--font-data); color: var(--muted); white-space: nowrap; }
+.cx-switch { position: relative; display: inline-block; width: 34px; height: 20px; cursor: pointer; }
+.cx-switch input { position: absolute; opacity: 0; }
+.cx-switch i { position: absolute; inset: 0; border-radius: 999px; background: #cfcdc6; transition: background .15s; }
+.cx-switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: translate .15s var(--ease-out); }
+.cx-switch input:checked + i { background: var(--ok); }
+.cx-switch input:checked + i::after { translate: 14px 0; }
+.cx-switch input:focus-visible + i { outline: 3px solid var(--text); outline-offset: 2px; }
+.cx-templates { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.cx-templates span { width: 100%; font-size: 12px; font-weight: 600; color: var(--muted); }
+.cx-templates button { height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; }
+.cx-templates button:hover { border-color: var(--text); }
+.cx-templates .blank { display: inline-flex; align-items: center; gap: 4px; border-style: dashed; }
+.cx-form { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--text); border-radius: 14px; background: var(--card); }
+.cx-form fieldset { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.cx-form legend { margin-bottom: 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cx-cond { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 34px; font-size: 14px; color: var(--muted); }
+.cx-cond.on { color: var(--text); }
+.cx-cond label, .cx-then label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.cx-cond > input { flex: 1; font-family: var(--font-data); }
+.cx-hours { display: inline-flex; align-items: center; gap: 6px; }
+.cx-then label { font-size: 14px; }
+.cx-then small { color: var(--muted); }
+.cx-preview { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--hover); font-weight: 600; }
+.cx-backtest { margin: 0; font-size: 13px; color: var(--muted); }
+.cx-backtest b { color: var(--text); }
+
+/* packs */
+.cx-pack { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); cursor: pointer; }
+.cx-pack.on { border-color: var(--text); }
+.cx-pack input { margin-top: 3px; }
+.cx-pack > span { display: grid; flex: 1; gap: 2px; }
+.cx-pack b { font-size: 14px; }
+.cx-pack small { font-size: 13px; color: var(--muted); }
+.cx-pack code { color: var(--muted); }
+.cx-pack.jev { margin-top: 14px; border-style: dashed; cursor: default; }
+.cx-run { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0; }
+.cx-run > code { flex: 1; min-width: 0; padding: 9px 10px; border-radius: 8px; background: #17171a; color: #f3f3f0; overflow-wrap: anywhere; }
+.cx-run > span { flex: 1; font-size: 12.5px; color: var(--muted); }
+.cx-out { max-height: 260px; margin: 0; padding: 10px 12px; overflow: auto; border-radius: 10px; background: var(--ok-bg); color: var(--ok); font: 500 12px/1.5 var(--font-data); white-space: pre-wrap; }
+.cx-out.bad { background: var(--bad-bg); color: var(--bad); }
+
+/* write your own */
+.cx-snippet { position: relative; margin-bottom: 14px; }
+.cx-snippet pre { margin: 0; padding: 14px 16px; overflow: auto; border-radius: 12px; background: #17171a; color: #f3f3f0; font: 500 12.5px/1.55 var(--font-data); }
+.cx-snippet button { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, .14); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+/* entry points on /live: the Budgets button by the budget sentence, Add policy in the Policies tab */
+.A .groups { display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); font: 600 14px var(--font-body); cursor: pointer; }
+.A .groups:hover { background: var(--hover); }
+.A .panel button.addpol { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 38px; margin-bottom: 10px; border: 1px dashed var(--text); border-radius: 10px; background: var(--card); color: var(--text); font: 600 13.5px var(--font-body); }
+.A .panel button.addpol:hover { background: var(--hover); }
+/* a rule that warns: the payout continues, the agent gets guidance */
+.A .checks li.instruct { background: var(--warn-bg); color: var(--warn); }
+.A .audit ol > li.instruct { background: var(--warn-bg); }
+.A .audit ol > li.instruct .res { color: var(--warn); }
+
+@media (prefers-reduced-motion: reduce) { .cx-wrap, .cx { animation: none; } }

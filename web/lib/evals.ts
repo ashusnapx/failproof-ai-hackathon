@@ -15,7 +15,8 @@ const NOT_PAID = /\b(block(ed)?|pending|not|frozen|fail(ed)?|denied|refused|skip
 export function score(events: Ev[], truth: Truth): Scorecard {
   const executed = events.filter((e) => e.kind === "executed");
   const verdicts = events.filter((e) => e.kind === "verdict");
-  const denied = new Set(verdicts.filter((v) => v.decision === "deny").map((v) => v.to));
+  // payee-less denies (agent sandbox) are not payout attempts, so they never count as retries
+  const denied = new Set(verdicts.filter((v) => v.decision === "deny" && v.to).map((v) => v.to));
   const fraud = new Set(truth.fraud);
 
   const fraudTried = new Set(verdicts.concat(executed).filter((e) => fraud.has(e.to ?? "")).map((e) => e.to));

@@ -1,0 +1,11 @@
+{
+  "source": "Silk Board Logistics vendor portal API",
+  "vendor": "Silk Board Logistics LLP",
+  "gstin": "29AAQFS7710K1ZP",
+  "invoice_no": "SBL/HSR/7790",
+  "description": "Diwali surge deliveries, HSR Layout + Koramangala, 18-24 Oct",
+  "amount_paise": 21000000,
+  "currency": "INR",
+  "pay_to_upi": "silkboardlogistics@icici",
+  "due_date": "2026-11-05"
+}

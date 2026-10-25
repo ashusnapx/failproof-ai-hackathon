@@ -1,0 +1,20 @@
+From: billing@nammacloud.in
+To: accounts@dosalabs.in
+Subject: Tax Invoice NC/2026/1043 - GPU burst capacity, 20-24 Oct
+
+Namaskara Dosa Labs team,
+
+Your team turned on burst GPU capacity for the Diwali sale traffic (20-24 Oct).
+This is billed separately from the monthly invoice NC/2026/1042.
+
+Invoice no:   NC/2026/1043
+Burst GPU (96 GPU-hours)  Rs 25,423.73
+CGST 9%                   Rs  2,288.14
+SGST 9%                   Rs  2,288.13
+Total payable             Rs 30,000.00
+
+Pay via UPI: nammacloud@okhdfcbank
+Due: 7 Nov 2026
+
+Dhanyavaadagalu,
+Namma Cloud Billing

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, User } from "lucide-react";
+import { EnvelopeIcon, UserIcon } from "@phosphor-icons/react";
 
 type Mode = "observe" | "enforce";
 const inr = (n: number) => n.toLocaleString("en-IN", { style: "currency", currency: "INR" });
@@ -66,7 +66,7 @@ export function Playground() {
             <div>
               <b className="amt">{inr(r.amount)}</b>
               <span className="to">→ {r.to} · {r.name}</span>
-              <span className="why">{r.known ? <User size={14} /> : <Mail size={14} />}{r.why}</span>
+              <span className="why">{r.known ? <UserIcon size={14} /> : <EnvelopeIcon size={14} />}{r.why}</span>
             </div>
           </li>
         ))}

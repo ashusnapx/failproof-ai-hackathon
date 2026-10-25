@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building2, Plus, ShieldCheck, Store, Truck, Wallet } from "lucide-react";
+import { ArrowRightIcon, BuildingsIcon, PlusIcon, ShieldCheckIcon, StorefrontIcon, TruckIcon, WalletIcon } from "@phosphor-icons/react/ssr";
 import { COMPETITORS, WINS } from "./competitors";
 import { Logo, Mark } from "./logo";
 import { Playground } from "./playground";
@@ -30,10 +30,10 @@ const RUN = [
 const SPEAKER: Record<string, string> = { you: "You", agent: "AP agent · Claude Code", inbox: "Inbox · untrusted", tool: "Payment tool call", truepe: "TruePe" };
 
 const WHO = [
-  { icon: Building2, title: "Startup finance teams", body: "AP agents paying cloud, logistics and office vendors over UPI." },
-  { icon: Store, title: "Marketplaces", body: "Seller payouts and refunds where one fake bank-change email costs lakhs." },
-  { icon: Truck, title: "Logistics & D2C", body: "Daily COD remittances and vendor settlements run by agents." },
-  { icon: Wallet, title: "Fintech platforms", body: "Agentic payouts with an audit trail a regulator can read." },
+  { icon: BuildingsIcon, title: "Startup finance teams", body: "AP agents paying cloud, logistics and office vendors over UPI." },
+  { icon: StorefrontIcon, title: "Marketplaces", body: "Seller payouts and refunds where one fake bank-change email costs lakhs." },
+  { icon: TruckIcon, title: "Logistics & D2C", body: "Daily COD remittances and vendor settlements run by agents." },
+  { icon: WalletIcon, title: "Fintech platforms", body: "Agentic payouts with an audit trail a regulator can read." },
 ];
 
 const INCIDENTS = [
@@ -71,7 +71,7 @@ export default function Landing() {
       <header className="top">
         <Link href="/" aria-label="TruePe home"><Logo size={30} /></Link>
         <Link className="live" href="/live"><i />Live at Hacktober Hack</Link>
-        <nav><a href="#how">How it works</a><a href="#compare">Compare</a><Link href="/coverage">Coverage</Link><a href="#faq">FAQ</a></nav>
+        <nav><a href="#how">How it works</a><a href="#compare">Compare</a><Link href="/coverage">Coverage</Link><a href="#faq">FAQ</a><Link href="/flow">Call flow</Link></nav>
         <Link className="btn ink" href="/live">Watch it live</Link>
       </header>
 
@@ -81,7 +81,7 @@ export default function Landing() {
           <h1>Every rupee needs <em>a sentence.</em></h1>
           <p className="lede">TruePe sits at your AI agent&rsquo;s payment tool call. A UPI payout goes through only when it traces back to words a human actually said. Emails, invoices and vendor APIs can talk to your agent. They can&rsquo;t say pay.</p>
           <div className="ctas">
-            <Link className="btn ink" href="/live">Watch a real run <ArrowRight size={18} /></Link>
+            <Link className="btn ink" href="/live">Watch a real run <ArrowRightIcon size={18} /></Link>
             <a className="btn" href="#how">How it works</a>
             <Link className="btn" href="/coverage">What we cover</Link>
           </div>
@@ -152,7 +152,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="wins">
-            {WINS.map((w) => <div className="win" key={w.title}><ShieldCheck size={22} /><b>{w.title}</b><span>{w.body}</span></div>)}
+            {WINS.map((w) => <div className="win" key={w.title}><ShieldCheckIcon size={22} /><b>{w.title}</b><span>{w.body}</span></div>)}
           </div>
         </section>
       ) : null}
@@ -168,7 +168,7 @@ export default function Landing() {
       <section className="faq" id="faq">
         <h2>Good <em>questions.</em></h2>
         <div className="list">
-          {FAQ.map((f) => <details key={f.q}><summary>{f.q}<Plus size={22} /></summary><p>{f.a}</p></details>)}
+          {FAQ.map((f) => <details key={f.q}><summary>{f.q}<PlusIcon size={22} /></summary><p>{f.a}</p></details>)}
         </div>
       </section>
 
@@ -176,7 +176,7 @@ export default function Landing() {
         <span className="kn" aria-hidden="true">ಯಾರು ಹೇಳಿದರು?</span>
         <h2>Who said so?<br /><em>You did.</em></h2>
         <p>Watch a real Claude Code agent work through the Dosa Labs inbox, live, in about 25 seconds.</p>
-        <Link className="btn ink" href="/live">Watch it live <ArrowRight size={18} /></Link>
+        <Link className="btn ink" href="/live">Watch it live <ArrowRightIcon size={18} /></Link>
       </section>
 
       <footer className="foot">
@@ -186,7 +186,7 @@ export default function Landing() {
           Built at Hacktober Hack (Failproof AI × Quad AI), HSR Layout, Bengaluru.
         </span>
         <nav>
-          <Link href="/live">Live demo</Link><Link href="/coverage">Coverage</Link><a href="#compare">Compare</a><a href="#faq">FAQ</a>
+          <Link href="/live">Live demo</Link><Link href="/coverage">Coverage</Link><Link href="/flow">Call flow</Link><a href="#compare">Compare</a><a href="#faq">FAQ</a>
           <a href="https://docs.befailproof.ai" target="_blank" rel="noreferrer">Failproof AI docs</a>
           <a href="https://befailproof.ai/policy-hub/" target="_blank" rel="noreferrer">Policy hub</a>
           <a href="https://github.com/ashusnapx/failproof-ai-hackathon" target="_blank" rel="noreferrer">GitHub</a>

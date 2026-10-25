@@ -1,0 +1,158 @@
+/* TruePe AI: floating chat on every page. The human's words are handwritten on yellow, like the budget on /live. */
+.tp-ai { --ink: #1b1a17; --muted: #625c4f; --line: rgba(27, 26, 23, .13); --soft-bg: #f3f2ee; --sign: #f6c700; --hand-bg: #fff6cf; --hand-line: #e6cd57;
+  --ok: #0f7b3e; --ok-bg: #e6f3eb; --bad: #c8102e; --bad-bg: #fdebed; --ice: #0b3d6b; --ease: cubic-bezier(.16, 1, .3, 1);
+  font: 14px/1.5 var(--font-body); color: var(--ink); }
+.tp-ai button { font-family: var(--font-body); }
+.tp-ai button:focus-visible, .tp-ai textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tp-ai .spin { animation: tp-spin 1s linear infinite; }
+@keyframes tp-spin { to { rotate: 360deg; } }
+
+/* launcher */
+.tp-ai .bubble { position: fixed; right: 20px; bottom: 20px; z-index: 1000; display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px 0 9px;
+  border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 600; box-shadow: 0 8px 24px rgba(0, 0, 0, .22); cursor: pointer;
+  transition: translate .15s var(--ease), box-shadow .15s; }
+.tp-ai .bubble:hover { translate: 0 -2px; box-shadow: 0 12px 28px rgba(0, 0, 0, .26); }
+.tp-ai .bubble svg { border-radius: 8px; }
+.tp-ai .bubble.on { padding-left: 15px; }
+.tp-ai .bubble .dot { position: absolute; top: 6px; right: 8px; width: 10px; height: 10px; border: 2px solid var(--ink); border-radius: 50%; background: var(--sign); }
+
+/* window */
+.tp-ai .win { position: fixed; right: 20px; bottom: 80px; z-index: 1000; display: flex; flex-direction: column;
+  width: min(420px, calc(100vw - 32px)); height: min(660px, calc(100dvh - 112px)); border: 1px solid var(--line); border-radius: 18px; background: #fff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .2); overflow: hidden; animation: tp-in .22s var(--ease) both; }
+.tp-ai .win.big { width: min(760px, calc(100vw - 32px)); height: calc(100dvh - 112px); }
+@keyframes tp-in { from { opacity: 0; translate: 0 12px; } }
+.tp-ai header, .tp-ai .frozen, .tp-ai form { flex: none; }
+.tp-ai header { display: flex; align-items: center; gap: 4px; padding: 10px 8px 10px 14px; border-bottom: 1px solid var(--line); }
+.tp-ai header > svg { flex: none; margin-right: 6px; border-radius: 8px; }
+.tp-ai .who { display: grid; flex: 1; min-width: 0; line-height: 1.25; }
+.tp-ai .who b { font-size: 15px; }
+.tp-ai .who small { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-ai .who small i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.tp-ai .who small.busy i { background: var(--sign); animation: tp-pulse 1s infinite; }
+.tp-ai .who small.cold i { background: var(--ice); }
+@keyframes tp-pulse { 50% { opacity: .35; } }
+.tp-ai .cost { margin-right: 4px; padding: 3px 8px; border-radius: 999px; background: var(--soft-bg); font: 600 12px var(--font-data); color: var(--muted); cursor: help; }
+.tp-ai .icon { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 9px; background: none; color: var(--muted); cursor: pointer; }
+.tp-ai .icon:not(:disabled):hover { background: var(--soft-bg); color: var(--ink); }
+.tp-ai .icon:disabled { opacity: .35; cursor: not-allowed; }
+.tp-ai .frozen { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--ice); color: #fff; font-size: 13px; font-weight: 600; }
+
+/* thread: the only part that scrolls, so the box always stays in view */
+.tp-ai .thread { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 14px; padding: 16px 14px; overflow-y: auto; overscroll-behavior: contain; }
+.tp-ai .thread p { margin: 0; }
+.tp-ai .turn { display: flex; flex-direction: column; gap: 8px; }
+.tp-ai .kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin: 0 2px; padding: 0 6px; border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 6px; background: #fff; color: var(--ink); font: 700 13px var(--font-data); vertical-align: 1px; cursor: pointer; }
+.tp-ai .kbd:hover { border-color: var(--ink); }
+
+.tp-ai .me { align-self: flex-end; max-width: 85%; padding: 7px 13px; border: 1px solid var(--hand-line); border-radius: 16px 16px 4px 16px; background: var(--hand-bg);
+  font: 400 17px/1.35 var(--font-hand); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tp-ai .me.sending { opacity: .6; }
+.tp-ai .me.failed { border-color: var(--bad); }
+.tp-ai .bot { display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: start; gap: 8px; }
+.tp-ai .bot > svg { border-radius: 7px; }
+.tp-ai .col { display: grid; justify-items: start; gap: 6px; min-width: 0; }
+.tp-ai .bub { max-width: 100%; padding: 9px 13px; border-radius: 4px 16px 16px 16px; background: var(--soft-bg); overflow-wrap: anywhere; }
+.tp-ai .bub.muted { color: var(--muted); }
+.tp-ai .bub p + p, .tp-ai .bub p + ul, .tp-ai .bub ul + p { margin-top: 6px; }
+.tp-ai .bub ul { margin: 0; padding-left: 18px; }
+.tp-ai .bub li + li { margin-top: 3px; }
+.tp-ai .bub code { padding: 1px 5px; border-radius: 5px; background: #fff; font: 12.5px var(--font-data); }
+.tp-ai .typing .bub { display: inline-flex; align-items: center; gap: 8px; justify-self: start; color: var(--muted); font-size: 13px; }
+.tp-ai .dots { display: inline-flex; gap: 3px; }
+.tp-ai .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); animation: tp-dot 1.2s infinite; }
+.tp-ai .dots i:nth-child(2) { animation-delay: .15s; }
+.tp-ai .dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes tp-dot { 0%, 60%, 100% { opacity: .25; translate: 0 0; } 30% { opacity: 1; translate: 0 -3px; } }
+
+.tp-ai .paid, .tp-ai .blocked { display: flex; align-items: flex-start; gap: 6px; margin-left: 34px !important; padding: 6px 10px; border-radius: 10px; font-size: 13px; overflow-wrap: anywhere; }
+.tp-ai .paid { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
+.tp-ai .blocked { background: var(--bad-bg); color: #6d0a1a; cursor: help; }
+.tp-ai .paid svg, .tp-ai .blocked svg { flex: none; margin-top: 2px; }
+.tp-ai .blocked svg, .tp-ai .blocked b { color: var(--bad); }
+.tp-ai .sys { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; font-size: 12px; color: var(--muted); text-align: center; }
+.tp-ai .sys.err { color: var(--bad); }
+
+.tp-ai .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding-left: 2px; font-size: 11.5px; color: var(--muted); }
+.tp-ai .meta span { display: inline-flex; align-items: center; gap: 3px; cursor: default; }
+.tp-ai .meta-btn { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border: 0; border-radius: 6px; background: none; color: var(--muted); font-size: 11.5px; cursor: pointer; }
+.tp-ai .meta-btn:hover { background: var(--soft-bg); color: var(--ink); }
+
+/* actions: waiting for the human in the same yellow as their own words; done in green */
+.tp-ai .act { display: grid; gap: 3px; width: 100%; padding: 10px 12px; border: 1px solid #ecd77a; border-radius: 12px; background: #fffbea; }
+.tp-ai .act.done { border-color: #b9dcc6; background: var(--ok-bg); }
+.tp-ai .act.gone { padding: 6px 12px; border-color: var(--line); background: none; color: var(--muted); font-size: 12.5px; text-decoration: line-through; }
+.tp-ai .act .what { font-weight: 600; overflow-wrap: anywhere; }
+.tp-ai .act small { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.tp-ai .act .err { display: flex; align-items: center; gap: 4px; color: var(--bad); }
+.tp-ai .btns { display: flex; gap: 6px; margin-top: 5px; }
+.tp-ai .btns button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.tp-ai .yes { border: 0; background: var(--ink); color: #fff; }
+.tp-ai .no { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+.tp-ai .btns button:disabled { opacity: .6; cursor: progress; }
+.tp-ai .act .ok { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; color: var(--ok); font-size: 13px; font-weight: 600; }
+
+.tp-ai .jump { position: absolute; left: 50%; bottom: 112px; display: grid; place-items: center; width: 34px; height: 34px; margin-left: -17px;
+  border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); box-shadow: 0 4px 12px rgba(0, 0, 0, .12); cursor: pointer; }
+
+/* composer */
+.tp-ai form { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 8px; padding: 10px 12px 8px; border-top: 1px solid var(--line); }
+.tp-ai .slash { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); font: 700 17px var(--font-data); cursor: pointer; }
+.tp-ai .slash:hover { border-color: var(--ink); color: var(--ink); }
+
+/* the "/" menu: every command, grouped, opening upward over the thread like Discord's */
+.tp-ai .cmds { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 2px); z-index: 2; max-height: min(340px, 55dvh); margin: 0; padding: 6px; overflow-y: auto; list-style: none;
+  border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 -10px 30px rgba(0, 0, 0, .12); animation: tp-in .14s var(--ease) both; }
+.tp-ai .cmds .grp { display: block; padding: 8px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tp-ai .cmds button { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 8px; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.tp-ai .cmds button.on { background: var(--soft-bg); }
+.tp-ai .cmds code { flex: none; font: 600 13px var(--font-data); }
+.tp-ai .cmds button span { min-width: 0; overflow: hidden; font-size: 13px; color: var(--muted); white-space: nowrap; text-overflow: ellipsis; }
+.tp-ai .cmds .none { padding: 10px 8px; font-size: 13px; color: var(--muted); }
+
+/* built on: both marks, small */
+.tp-ai .brand { grid-column: 1 / -1; justify-self: center; display: flex; align-items: center; gap: 6px; margin-top: 1px; padding: 2px 6px; border-radius: 8px;
+  color: var(--muted); font-size: 11.5px; text-decoration: none; opacity: .85; transition: opacity .15s; }
+.tp-ai .brand:hover { opacity: 1; }
+.tp-ai .brand svg, .tp-ai .brand img { border-radius: 5px; }
+.tp-ai .brand i { font-style: normal; font-size: 12px; opacity: .6; }
+.tp-ai .brand em { margin-left: 8px; font-style: normal; font-family: var(--font-data); }
+.tp-ai textarea { max-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: 14px/1.4 var(--font-body); resize: none; overflow-y: auto; }
+.tp-ai textarea:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(246, 199, 0, .35); }
+.tp-ai .send { display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 12px; background: var(--ink); color: var(--sign); cursor: pointer; }
+.tp-ai .send:disabled { opacity: .4; cursor: not-allowed; }
+.tp-ai .send.stop { background: var(--bad); color: #fff; }
+
+/* phones: the window takes the screen, like a native chat */
+@media (max-width: 520px) {
+  .tp-ai .win, .tp-ai .win.big { inset: 0; width: 100%; height: 100dvh; border: 0; border-radius: 0; }
+  .tp-ai .wide, .tp-ai .bubble.on { display: none; }
+  .tp-ai .bubble { right: 16px; bottom: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .tp-ai .win, .tp-ai .dots i, .tp-ai .who small.busy i { animation: none; } .tp-ai .bubble { transition: none; } }
+
+/* everything under the header; the chats sidebar opens over it (small window) or beside it (big window) */
+.tp-ai .body { position: relative; display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.tp-ai .icon.on { background: var(--soft-bg); color: var(--ink); }
+.tp-ai .side { position: absolute; inset: 0 auto 0 0; z-index: 3; display: flex; flex-direction: column; gap: 2px; width: min(280px, 86%); padding: 8px;
+  overflow-y: auto; border-right: 1px solid var(--line); background: #fbfaf7; box-shadow: 8px 0 24px rgba(0, 0, 0, .08); animation: tp-side .18s var(--ease) both; }
+@keyframes tp-side { from { opacity: 0; translate: -12px 0; } }
+.tp-ai .win.big.side-on .body { padding-left: 280px; }
+.tp-ai .win.big .side { width: 280px; box-shadow: none; }
+.tp-ai .side-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 6px 6px; }
+.tp-ai .side-head b { font-size: 14px; }
+.tp-ai .side-new { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  color: var(--ink); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.tp-ai .side-new:not(:disabled):hover { border-color: var(--ink); }
+.tp-ai .side-new:disabled { opacity: .5; cursor: not-allowed; }
+.tp-ai .side .grp { display: block; padding: 10px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tp-ai .side-item { display: grid; gap: 1px; width: 100%; padding: 8px 10px; border: 0; border-radius: 9px; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.tp-ai .side-item:hover { background: var(--soft-bg); }
+.tp-ai .side-item.on { background: #fff6cf; }
+.tp-ai .side-item b { overflow: hidden; font-size: 13.5px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.tp-ai .side-item small { font-size: 11.5px; color: var(--muted); }
+.tp-ai .side-empty { margin: 8px; font-size: 12.5px; color: var(--muted); }
+/* a past chat is read only: this bar replaces the box */
+.tp-ai .past { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); background: #fbfaf7; font-size: 13px; color: var(--muted); }
+.tp-ai .past button { height: 34px; padding: 0 14px; border: 0; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }

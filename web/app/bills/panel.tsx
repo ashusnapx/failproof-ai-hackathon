@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Mail, Play, RefreshCw } from "lucide-react";
+import { ArrowClockwiseIcon, EnvelopeIcon, PlayIcon } from "@phosphor-icons/react";
 import "./bills.css";
 
 type Bill = {
@@ -9,7 +9,8 @@ type Bill = {
   vendor: string | null; status: "ready" | "review" | "suspicious"; note: string; gmail: boolean;
 };
 const inr = (n: number) => n.toLocaleString("en-IN", { style: "currency", currency: "INR" });
-const STAMP = { ready: "READY", review: "REVIEW", suspicious: "SUSPICIOUS" };
+const LABEL = { ready: "Ready", review: "Review", suspicious: "Suspicious" };
+const STATUSES = ["ready", "review", "suspicious"] as const;
 
 // Fetch -> TruePe pre-screens every bill -> human sets the budget -> Pay runs the agent under Failproof AI policies.
 // Rendered as a tab on /live, so the run it starts plays out on the same screen.
@@ -18,6 +19,7 @@ export function BillsPanel() {
   const [budget, setBudget] = useState("");
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState({ text: "", err: false });
+  const [show, setShow] = useState<"all" | Bill["status"]>("all");
 
   const refresh = useCallback(async () => {
     const r = await fetch("/api/bills", { cache: "no-store" });
@@ -26,6 +28,7 @@ export function BillsPanel() {
     const ready = j.bills.filter((b) => b.status === "ready").reduce((s, b) => s + (b.amount ?? 0), 0);
     setBudget((cur) => cur || Math.ceil(ready).toLocaleString("en-IN"));
   }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- refresh sets state only after its fetch resolves
   useEffect(() => { refresh(); }, [refresh]);
 
   async function fetchGmail() {
@@ -48,27 +51,31 @@ export function BillsPanel() {
   return (
     <div className="bills embedded">
       <div className="acts">
-        <button className="gm" onClick={fetchGmail} disabled={!!busy}><Mail size={15} />{busy === "gmail" ? "Fetching…" : "Fetch from Gmail"}</button>
-        <button onClick={refresh} disabled={!!busy} aria-label="Refresh bills"><RefreshCw size={15} /></button>
+        <button className="gm" onClick={fetchGmail} disabled={!!busy}><EnvelopeIcon size={15} />{busy === "gmail" ? "Fetching…" : "Fetch from Gmail"}</button>
+        <button onClick={refresh} disabled={!!busy} aria-label="Refresh bills"><ArrowClockwiseIcon size={15} /></button>
         <label className="budget">₹<input value={budget} onChange={(e) => setBudget(e.target.value.replace(/[^\d,]/g, "").slice(0, 12))} aria-label="Approved budget in rupees" /></label>
-        <button className="pay" onClick={pay} disabled={!!busy || !budget}><Play size={15} fill="currentColor" />Pay with TruePe</button>
+        <button className="pay" onClick={pay} disabled={!!busy || !budget}><PlayIcon size={15} weight="fill" />Pay with TruePe</button>
       </div>
-      <div className="sum">
-        <span>Ready <b>{inr(sum("ready"))}</b></span>
-        <span>Review <b>{inr(sum("review"))}</b></span>
-        <span>Suspicious <b>{inr(sum("suspicious"))}</b></span>
+      <div className="filters" role="group" aria-label="Filter bills">
+        <button className="all" aria-pressed={show === "all"} onClick={() => setShow("all")}>All <i>{bills.length}</i></button>
+        {STATUSES.map((s) => (
+          <button key={s} className={s} aria-pressed={show === s} onClick={() => setShow(show === s ? "all" : s)}>
+            {LABEL[s]} <i>{bills.filter((b) => b.status === s).length}</i> <b>{inr(sum(s))}</b>
+          </button>
+        ))}
       </div>
       {msg.text ? <div className={`msg ${msg.err ? "err" : ""}`}>{msg.text}</div> : null}
-      <div className="grid">
-        {bills.map((b) => (
+      <div className="list">
+        {bills.filter((b) => show === "all" || b.status === show).map((b) => (
           <div className={`bill ${b.status}`} key={b.id}>
-            <div className="stamp">{STAMP[b.status]}</div>
-            <div className="body">
-              <b>{b.vendor ?? b.subject}{b.gmail ? <span className="tag">Gmail</span> : null}</b>
-              <small>{b.invoice || "no invoice no."} · {b.upi || "no UPI"}</small>
-              <span>{b.note}</span>
+            <div className="row">
+              <span className="pill">{LABEL[b.status]}</span>
+              <b className="who">{b.vendor ?? b.subject}</b>
+              {b.gmail ? <span className="tag">Gmail</span> : null}
+              <span className="amt">{b.amount != null ? inr(b.amount) : "₹ ?"}</span>
             </div>
-            <div className="amt">{b.amount != null ? inr(b.amount) : "₹ ?"}</div>
+            <small>{b.invoice || "no invoice no."} · {b.upi || "no UPI"}</small>
+            <span className="screen">{b.note}</span>
           </div>
         ))}
       </div>

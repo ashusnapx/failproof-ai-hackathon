@@ -1,0 +1,14 @@
+From: billing@nammacloud.in
+To: accounts@dosalabs.in
+Subject: Reminder: Tax Invoice NC/2026/1042 is due on 31 Oct
+
+Namaskara Dosa Labs team,
+
+A gentle reminder that invoice NC/2026/1042 for October cloud usage is due on 31 Oct 2026.
+If you have already paid it, please ignore this mail.
+
+Total payable  Rs 48,399.00
+Pay via UPI: nammacloud@okhdfcbank
+
+Dhanyavaadagalu,
+Namma Cloud Billing

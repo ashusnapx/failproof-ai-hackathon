@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon } from "@phosphor-icons/react/ssr";
 import { Mark } from "../logo";
 import "./coverage.css";
 
@@ -72,7 +72,7 @@ export default function Coverage() {
   return (
     <main className="cov"><div className="wrap">
       <header className="covhead">
-        <Link href="/" className="back"><ArrowLeft size={18} /> TruePe</Link>
+        <Link href="/" className="back"><ArrowLeftIcon size={18} /> TruePe</Link>
         <div className="covtitle"><Mark size={56} /><h1>What TruePe covers</h1></div>
         <div className="tally">
           {(["live", "eval", "platform", "next", "n/a"] as const).map((st) => (

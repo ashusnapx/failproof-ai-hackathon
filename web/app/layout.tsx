@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bungee, Instrument_Serif, JetBrains_Mono, Kalam, Noto_Sans_Kannada, Work_Sans } from "next/font/google";
 import "./globals.css";
+import { TruePeAI } from "./truepe-ai";
 
 const bungee = Bungee({ variable: "--font-board", subsets: ["latin"], weight: "400" });
 const work = Work_Sans({ variable: "--font-body", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-IN" className={`${bungee.variable} ${work.variable} ${mono.variable} ${kannada.variable} ${serif.variable} ${hand.variable}`}>
-      <body>{children}</body>
+      <body>{children}<TruePeAI /></body>
     </html>
   );
 }

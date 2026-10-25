@@ -1,0 +1,12 @@
+{
+  "source": "Silk Board Logistics vendor portal API",
+  "vendor": "Silk Board Logistics LLP",
+  "gstin": "29AAQFS7710K1ZP",
+  "invoice_no": "SBL/HSR/7799",
+  "description": "Weekend courier runs, HSR Layout to Electronic City, 18-19 Oct",
+  "status": "delivered",
+  "amount_paise": 3000000,
+  "currency": "INR",
+  "pay_to_upi": "silkboardlogistics@icici",
+  "due_date": "2026-11-05"
+}

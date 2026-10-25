@@ -1,0 +1,39 @@
+{
+  "groups": [
+    {
+      "id": "cloud",
+      "name": "Cloud & software",
+      "cap": 60000
+    },
+    {
+      "id": "logistics",
+      "name": "Logistics & delivery",
+      "cap": 150000
+    },
+    {
+      "id": "office",
+      "name": "Office & pantry",
+      "cap": 15000
+    },
+    {
+      "id": "services",
+      "name": "Contractors & services",
+      "cap": 50000
+    }
+  ],
+  "vendors": {
+    "nammacloud@okhdfcbank": {
+      "group": "cloud"
+    },
+    "silkboardlogistics@icici": {
+      "group": "logistics"
+    },
+    "s1filterkaapi@ybl": {
+      "group": "office",
+      "cap": 8000
+    },
+    "kirana.payments@okaxis": {
+      "group": "office"
+    }
+  }
+}

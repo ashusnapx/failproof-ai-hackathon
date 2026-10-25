@@ -1,0 +1,17 @@
+From: billing@nammacloud.in
+To: accounts@dosalabs.in
+Subject: Tax Invoice NC/2026/1046 - domain + managed DNS, yearly
+
+Namaskara Dosa Labs team,
+
+Invoice no:   NC/2026/1046
+Domain + managed DNS (1 yr)  Rs 500.00
+CGST 9%                      Rs  45.00
+SGST 9%                      Rs  45.00
+Total payable                Rs 590.00
+
+Pay via UPI: nammacloud@okhdfcbank
+Due: 31 Oct 2026
+
+Dhanyavaadagalu,
+Namma Cloud Billing

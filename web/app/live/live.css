@@ -30,6 +30,7 @@ html:has(.A), body:has(.A) { background: #f3f3f0; }
 .A .go, .A .freeze { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 12px; font: 600 15px var(--font-body); cursor: pointer; transition: background .15s, translate .15s var(--ease-out); }
 .A .go { border: 0; background: var(--text); color: var(--sign); }
 .A .go:disabled { cursor: progress; opacity: .75; }
+.A .go.stop { background: var(--bad); color: #fff; }
 .A .go:not(:disabled):hover { translate: 0 -1px; }
 .A .right { display: flex; align-items: center; gap: 10px; }
 .A .status { display: inline-flex; align-items: center; gap: 8px; max-width: 250px; height: 32px; padding: 0 12px; border-radius: 999px; background: #ecebe6; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -92,11 +93,60 @@ html:has(.A), body:has(.A) { background: #f3f3f0; }
 .A .checks li { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font: 600 11.5px var(--font-data); }
 .A .checks li.deny { background: var(--bad-bg); color: var(--bad); }
 .A .checks li.would-deny { background: var(--warn-bg); color: var(--warn); }
+.A .checks li.skip { background: var(--hover); color: var(--muted); }
+/* "Blocked/Flagged by Failproof AI" on the cards where a policy stepped in */
+.A .fp { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; font-weight: 700; }
+.A .fp.blocked { background: var(--bad-bg); color: var(--bad); }
+.A .slip.lost .fp { background: var(--card); color: var(--bad); }
+/* hover tips name the exact policy; they span their row (never wider than the card) so the feed never scrolls sideways */
+.A .slip, .A .note, .A .slip .line, .A .checkrow { position: relative; }
+.A .slip:hover, .A .note:hover { z-index: 2; }
+.A [data-tip] { cursor: help; }
+.A [data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 0; right: 0; z-index: 3; padding: 8px 10px; border-radius: 8px; background: #17171a; color: #f3f3f0; box-shadow: 0 6px 20px rgba(0, 0, 0, .2); font: 500 12.5px/1.45 var(--font-body); letter-spacing: 0; text-transform: none; white-space: pre-line; pointer-events: none; }
+.A .checks [data-tip]:hover::after { bottom: calc(100% + 6px); }
+.A .line [data-tip]:hover::after, .A .note [data-tip]:hover::after { top: calc(100% + 6px); }
+.A .checkrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.A .more { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font: 600 12.5px var(--font-body); cursor: pointer; }
+.A .more:hover { background: var(--hover); }
+.A .feed-head .more { margin-left: 12px; }
+.A .feed-head .counts { margin-left: auto; }
+/* expanded: every policy Failproof ran, its reason and evidence, the intercepted call and what came back */
+.A .audit { display: grid; gap: 10px; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.A .cmd { display: grid; gap: 4px; }
+.A .cmd span { font-size: 12px; font-weight: 600; color: var(--muted); }
+.A .cmd code { padding: 8px 10px; border-radius: 8px; background: #17171a; color: #f3f3f0; font: 500 12.5px/1.5 var(--font-data); overflow-wrap: anywhere; white-space: pre-wrap; }
+.A .cmd.rail code { background: var(--ok-bg); color: var(--ok); }
+.A .cmd.rail.bad code { background: var(--bad-bg); color: var(--bad); }
+.A .audit ol { display: grid; margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; }
+.A .audit ol > li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 2px 12px; padding: 9px 12px; }
+.A .audit ol > li + li { border-top: 1px solid var(--line); }
+.A .audit ol .res { grid-row: span 3; display: inline-flex; align-items: center; gap: 4px; align-self: start; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ok); }
+.A .audit ol > li.deny .res { color: var(--bad); }
+.A .audit ol > li.would-deny .res { color: var(--warn); }
+.A .audit ol > li.skip .res { color: var(--muted); }
+.A .audit ol > li.deny { background: var(--bad-bg); }
+.A .audit ol > li.would-deny { background: var(--warn-bg); }
+.A .audit ol b { font: 600 13px var(--font-data); }
+.A .audit ol p { margin: 0; font-size: 13.5px; }
+.A .audit ol small { font-size: 12px; color: var(--muted); }
 .A .note { display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; border: 1px dashed #efb3bb; border-radius: 12px; background: var(--card); font-size: 14px; color: var(--muted); }
 .A .note svg { flex-shrink: 0; margin-top: 2px; color: var(--bad); }
 .A .note b { margin-right: 4px; color: var(--bad); font: 600 12px var(--font-data); }
 .A .report { padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
-.A .report p { margin: 8px 0 0; font-size: 15px; white-space: pre-line; }
+/* one row per line of the agent's summary: icon, vendor in bold, then what happened */
+.A .report ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.A .report li { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--hover); font-size: 14.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.A .report li > svg { margin-top: 2px; }
+.A .report li b { display: block; font-weight: 700; }
+.A .report li em { display: block; margin-top: 2px; font-style: normal; font-weight: 600; }
+.A .report li.ok { background: var(--ok-bg); }
+.A .report li.ok > svg { color: var(--ok); }
+.A .report li.bad, .A .report li.lost { background: var(--bad-bg); }
+.A .report li.bad > svg, .A .report li.lost > svg, .A .report li.lost em { color: var(--bad); }
+.A .report li.warn { background: var(--warn-bg); }
+.A .report li.warn > svg { color: var(--warn); }
+.A .report li.plain, .A .report li.sum { display: block; padding: 2px 0; background: none; }
+.A .report li.sum { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); border-radius: 0; font-weight: 600; }
 
 /* side: scorecard and tabs */
 .A .side { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 16px; min-height: 0; }
@@ -110,7 +160,10 @@ html:has(.A), body:has(.A) { background: #f3f3f0; }
 .A .metrics b { font: 600 14px/1.3 var(--font-data); overflow-wrap: anywhere; }
 .A .metrics .bad b { color: var(--bad); }
 .A .hist { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; }
-.A .hist span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.A .hist a { text-decoration: none; }
+.A .saved, .A .permalink { font-size: 13px; font-weight: 600; color: inherit; text-decoration: underline; }
+.A .permalink { display: inline-block; margin-top: 10px; }
+.A .hist span, .A .hist a { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 .A .hist .ok { background: var(--ok-bg); color: var(--ok); }
 .A .hist .bad { background: var(--bad-bg); color: var(--bad); }
 
@@ -152,6 +205,7 @@ html:has(.A), body:has(.A) { background: #f3f3f0; }
 .A .panel button.gmail { width: auto; padding: 0 10px; font: 600 12px var(--font-body); }
 .A .panel button.gmail.on { background: var(--bad); color: #fff; }
 
+@media (max-width: 1400px) { .A .brand small { display: none; } }
 /* narrower than a projector: stack and let the page scroll */
 @media (max-width: 1100px) {
   .A { height: auto; overflow: visible; grid-template-columns: minmax(0, 1fr); }
@@ -164,3 +218,41 @@ html:has(.A), body:has(.A) { background: #f3f3f0; }
 @media (prefers-reduced-motion: reduce) {
   .A .slip, .A .slip.blocked, .A .freeze.on, .A .status.live i, .A .spin { animation: none; }
 }
+
+/* the human's TruePe AI message above the payouts it led to: their own words, handwritten like the budget */
+.A .you { justify-self: end; display: flex; align-items: baseline; gap: 8px; max-width: 70%; margin: 4px 0 0; padding: 6px 14px; border: 1px solid #e6cd57; border-radius: 14px 14px 4px 14px; background: #fff6cf; font: 400 18px/1.35 var(--font-hand); }
+.A .you svg { flex: none; color: var(--muted); }
+/* a TruePe AI turn still running, and its actions, which are approved in the TruePe AI window */
+.A .ai-wait { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 14px; }
+.A .ai-acts { justify-self: start; padding: 8px 14px; border: 1px solid #e6cd57; border-radius: 10px; background: #fffbea; color: var(--text); font: 600 13.5px var(--font-body); cursor: pointer; }
+.A .ai-acts:hover { border-color: var(--text); }
+
+/* the run's payouts as one table: green paid, amber a human must decide, red blocked or lost, ice frozen by the kill switch */
+.A .runtable { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.A .rt-sum { display: flex; flex-wrap: wrap; gap: 8px; }
+.A .rt-chip, .A .rt-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+.A .rt-chip { padding: 5px 12px; font-size: 13.5px; }
+.A .rt-chip b { font-variant-numeric: tabular-nums; }
+.A .runtable table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.A .runtable th { padding: 6px 10px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+.A .runtable td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.A .runtable tr:last-child td { border-bottom: 0; }
+.A .runtable .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.A .runtable code { font: 500 13px var(--font-data); }
+.A .runtable small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.A .runtable td b { margin-right: 4px; }
+.A .rt-badge { padding: 3px 10px 3px 8px; font-size: 12.5px; }
+.A .rt-chip.k-paid, .A .rt-badge.k-paid { background: var(--ok-bg); color: var(--ok); }
+.A .rt-chip.k-human, .A .rt-badge.k-human { background: var(--warn-bg); color: var(--warn); }
+.A .rt-chip.k-blocked, .A .rt-badge.k-blocked { background: var(--bad-bg); color: var(--bad); }
+.A .rt-chip.k-frozen, .A .rt-badge.k-frozen { background: var(--ice-bg); color: var(--ice); }
+.A .rt-chip.k-lost, .A .rt-badge.k-lost { background: var(--bad); color: #fff; }
+.A .runtable tr.k-paid td:nth-child(3) { color: var(--ok); font-weight: 600; }
+.A .runtable tr.k-lost td:nth-child(3) { color: var(--bad); font-weight: 600; }
+/* the agent's own report, folded under the table */
+.A details.report summary { cursor: pointer; list-style: none; }
+.A details.report summary::-webkit-details-marker { display: none; }
+.A details.report summary::after { content: " · show"; text-transform: none; letter-spacing: 0; }
+.A details.report[open] summary::after { content: " · hide"; }
+.A .runtable td:nth-child(2) code, .A .runtable td:nth-child(4) code { white-space: nowrap; }
+.A .runtable td:nth-child(2), .A .runtable td:nth-child(4) { overflow-wrap: normal; }

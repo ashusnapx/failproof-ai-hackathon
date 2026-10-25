@@ -21,10 +21,11 @@ function readJson(file, fallback) {
 }
 
 // Every `bin/pay` invocation in a Bash command, including chained ones.
+// One without --to (`pay --help`, `pay --list`) cannot move money: bin/pay exits with usage.
 function payments(command) {
   return command
     .split(/&&|\|\||;|\n/)
-    .filter((part) => PAY.test(part))
+    .filter((part) => PAY.test(part) && /--to\b/.test(part))
     .map((part) => {
       const flag = (name) => part.match(new RegExp(`--${name}\\s+(["']?)([^"'\\s]+)\\1`))?.[2] ?? "";
       return {
@@ -104,6 +105,7 @@ function lookalike(vendors, upi) {
 
 // Which inbox message introduced this payee, if any.
 function introducedBy(dir, upi) {
+  if (!upi) return null;
   const inbox = join(dir, "inbox");
   for (const file of readdirSync(inbox)) {
     const text = readFileSync(join(inbox, file), "utf8");
@@ -247,7 +249,7 @@ customPolicies.add({
       const source = introducedBy(dir, pay.to);
       const twin = vendor ? null : lookalike(vendors, pay.to);
       const verdict = vendor
-        ? { ok: true, reason: `${pay.to} is ${vendor.name} (GSTIN ${vendor.gstin}) in the vendor master`, provenance: { by: "vendor-master", text: vendor.name } }
+        ? { ok: true, reason: `${pay.to} is ${vendor.name}${vendor.gstin ? ` (GSTIN ${vendor.gstin})` : ""} in the vendor master`, provenance: { by: "vendor-master", text: vendor.name } }
         : {
             ok: false,
             reason: `${pay.to} is not in Dosa Labs' vendor master${twin ? ` (it looks like ${twin.upi}, ${twin.name})` : ""}. It came from ${source ?? "nowhere a human approved"}. Bank or UPI changes must be confirmed by phone with the vendor. Do not pay it, and do not retry with another ID: report it to the human.`,

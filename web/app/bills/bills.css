@@ -1,43 +1,45 @@
-/* /bills: one place for every bill TruePe pulled from mail (literal signboard colours). */
-.bills { min-height: 100vh; background: #1d1b17; color: #eee; font: 15px/1.45 var(--font-body), system-ui, sans-serif; }
-.bills .wrap { max-width: 1200px; margin: 0 auto; padding: 28px; display: grid; gap: 22px; }
-.bills .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; background: #f6c700; color: #1a1a1a; border-radius: 8px; padding: 20px 24px; box-shadow: inset 0 0 0 5px rgba(0,0,0,.16), 0 8px 0 rgba(0,0,0,.35); }
-.bills h1 { margin: 0; font: 400 40px/1 var(--font-board); color: #1a1a1a; }
-.bills .head a { color: #1a1a1a; font-weight: 700; }
-.bills .acts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.bills button, .bills .budget { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 5px; padding: 11px 16px; font: 400 15px var(--font-board); cursor: pointer; background: #1a1a1a; color: #f6c700; }
-.bills button.pay { background: #c8102e; color: #fff; }
-.bills button.gm { background: #0f7b3e; color: #fff; }
-.bills button:disabled { opacity: .55; cursor: wait; }
-.bills .budget { background: #fff8d6; color: #1a1a1a; cursor: text; }
-.bills .budget input { width: 120px; border: 0; background: transparent; font: 400 17px var(--font-board); color: #1a1a1a; outline: none; }
-.bills .msg { color: #b3a993; font-weight: 600; }
-.bills .msg.err { color: #ff8a80; }
-.bills .grid { display: grid; gap: 12px; }
-.bills .bill { display: grid; grid-template-columns: 150px 1fr auto; align-items: center; border-radius: 6px; overflow: hidden; background: #f3ead7; color: #1d1b17; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
-.bills .stamp { align-self: stretch; display: grid; place-items: center; font: 400 20px var(--font-board); color: #fff; padding: 12px; text-align: center; }
-.bills .ready .stamp { background: #0f7b3e; }
-.bills .review .stamp { background: #e8a317; color: #1a1500; }
-.bills .suspicious .stamp { background: #c8102e; }
-.bills .body { padding: 12px 16px; display: grid; gap: 3px; }
-.bills .body b { font-size: 16px; }
-.bills .body small { font: 600 13px var(--font-data); color: #5e5546; }
-.bills .amt { padding: 0 18px; font: 400 26px var(--font-board); white-space: nowrap; }
-.bills .tag { display: inline-block; margin-left: 8px; padding: 1px 6px; border-radius: 3px; background: #1a1a1a; color: #f6c700; font: 400 11px var(--font-board); vertical-align: 2px; }
-.bills .sum { display: flex; flex-wrap: wrap; gap: 18px; color: #e6dbc2; font-weight: 600; }
-.bills .sum b { font: 400 20px var(--font-board); color: #f6c700; }
-/* embedded as the Bills tab on /live */
-.bills.embedded { min-height: 0; background: transparent; color: inherit; display: grid; gap: 10px; }
-.bills.embedded .acts button, .bills.embedded .budget { padding: 8px 12px; font-size: 13px; }
-.bills.embedded .budget input { width: 96px; font-size: 15px; }
-.bills.embedded .sum { color: inherit; gap: 12px; font-size: 13px; }
-.bills.embedded .sum b { font-size: 15px; color: inherit; }
-.bills.embedded .bill { grid-template-columns: 96px 1fr auto; box-shadow: 0 3px 0 rgba(0,0,0,.2); }
-.bills.embedded .stamp { font-size: 13px; padding: 8px; }
-.bills.embedded .body { padding: 8px 10px; font-size: 13px; }
-.bills.embedded .amt { font-size: 17px; padding: 0 10px; }
-.tabs .panel .bills.embedded .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.tabs .panel .bills.embedded .acts button { width: auto; height: auto; min-height: 34px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 6px; font: 600 13px var(--font-body), system-ui, sans-serif; background: #1a1a1a; color: #fff; }
-.tabs .panel .bills.embedded .acts button.gm { background: #0f7b3e; }
-.tabs .panel .bills.embedded .acts button.pay { background: #c8102e; }
-.tabs .panel .bills.embedded .sum { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+/* Bills tab on /live: every bill TruePe pulled from mail, colour-coded by its pre-screen (ready, review, suspicious).
+   Uses the /live console tokens; selectors start at .A .panel so they win over the panel's icon-button defaults. */
+.A .panel .bills { display: grid; gap: 10px; }
+.A .panel .bills .acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.A .panel .bills .acts button { display: inline-flex; align-items: center; gap: 6px; width: auto; height: 34px; padding: 0 12px; border-radius: 9px; background: var(--text); color: #fff; font: 600 13px var(--font-body); white-space: nowrap; }
+.A .panel .bills .acts button:hover { background: #2c2c31; }
+.A .panel .bills .acts button.gm { background: var(--ok); }
+.A .panel .bills .acts button.pay { background: var(--bad); }
+.A .panel .bills .acts button:disabled { opacity: .55; cursor: wait; }
+.A .panel .bills .acts button[aria-label] { width: 34px; padding: 0; justify-content: center; }
+.A .panel .bills .budget { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 10px; border: 1px solid #e6cd57; border-radius: 9px; background: #fff6cf; font-weight: 600; cursor: text; }
+.A .panel .bills .budget input { width: 88px; border: 0; background: transparent; color: var(--text); font: 600 14px var(--font-data); outline: none; }
+
+/* filter chips double as the summary: count and total per status */
+.A .panel .bills .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.A .panel .bills .filters button { display: inline-flex; align-items: center; gap: 6px; width: auto; height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--text); font: 600 12.5px var(--font-body); }
+.A .panel .bills .filters i { font: 600 11.5px var(--font-data); font-style: normal; color: var(--muted); }
+.A .panel .bills .filters b { font: 600 12px var(--font-data); }
+.A .panel .bills .filters button::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.A .panel .bills .filters .ready::before { background: var(--ok); }
+.A .panel .bills .filters .review::before { background: #d99a00; }
+.A .panel .bills .filters .suspicious::before { background: var(--bad); }
+.A .panel .bills .filters .all::before { display: none; }
+.A .panel .bills .filters button[aria-pressed="true"] { border-color: var(--text); background: var(--text); color: #fff; }
+.A .panel .bills .filters button[aria-pressed="true"] i { color: #c9c8c2; }
+.A .panel .bills .msg { font-size: 13px; font-weight: 600; color: var(--muted); }
+.A .panel .bills .msg.err { color: var(--bad); }
+
+/* one compact, tinted card per bill */
+.A .panel .bills .list { display: grid; gap: 6px; }
+.A .panel .bills .bill { display: grid; gap: 2px; padding: 9px 12px; border: 1px solid; border-radius: 10px; font-size: 13px; }
+.A .panel .bills .bill.ready { border-color: #bfe0cb; background: var(--ok-bg); }
+.A .panel .bills .bill.review { border-color: #f0d796; background: var(--warn-bg); }
+.A .panel .bills .bill.suspicious { border-color: #f1b8bf; background: var(--bad-bg); }
+.A .panel .bills .row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.A .panel .bills .pill { flex: none; padding: 1px 8px; border-radius: 6px; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.A .panel .bills .ready .pill { background: var(--ok); }
+.A .panel .bills .review .pill { background: #b07a00; }
+.A .panel .bills .suspicious .pill { background: var(--bad); }
+.A .panel .bills .who { min-width: 0; overflow: hidden; font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.A .panel .bills .tag { flex: none; padding: 0 6px; border-radius: 5px; background: var(--text); color: #fff; font-size: 10.5px; font-weight: 700; }
+.A .panel .bills .amt { flex: none; margin-left: auto; font: 600 13.5px var(--font-data); }
+.A .panel .bills .bill small { overflow: hidden; color: var(--muted); font: 500 12px var(--font-data); text-overflow: ellipsis; white-space: nowrap; }
+.A .panel .bills .screen { color: var(--muted); font-size: 12.5px; }
+.A .panel .bills .suspicious .screen { color: var(--bad); }

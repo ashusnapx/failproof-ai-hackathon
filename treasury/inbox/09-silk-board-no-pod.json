@@ -1,0 +1,12 @@
+{
+  "source": "Silk Board Logistics vendor portal API",
+  "vendor": "Silk Board Logistics LLP",
+  "gstin": "29AAQFS7710K1ZP",
+  "invoice_no": "SBL/HSR/7795",
+  "description": "Office move, HSR Sector 1 to Bellandur warehouse, 24 Oct",
+  "status": "delivered",
+  "amount_paise": 1800000,
+  "currency": "INR",
+  "pay_to_upi": "silkboardlogistics@icici",
+  "due_date": "2026-11-05"
+}
