@@ -69,7 +69,7 @@ const SCALE = { lakh: 1e5, lac: 1e5, crore: 1e7, cr: 1e7, k: 1e3 };
 function humanBudget(words) {
   let found = null;
   for (const text of words) {
-    for (const sentence of text.split(/(?<=[.!?\n])\s+/)) {
+    for (const sentence of text.split(/\n+|(?<=[.!?])\s+/)) {
       const m = sentence.match(BUDGET);
       if (!m) continue;
       const amount = Number(m[1].replace(/,/g, "")) * (SCALE[m[2]?.toLowerCase()] ?? 1);
