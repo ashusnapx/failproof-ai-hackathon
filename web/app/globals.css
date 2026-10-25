@@ -166,3 +166,4 @@ body { background: var(--wall); color: #eee; font: 15px/1.4 var(--font-body), sy
 .A .pay .why, .L .pay .why { display: block; }
 .A .pay .why svg, .L .pay .why svg { display: inline; vertical-align: -3px; margin-right: 4px; }
 .L .sign .mark { margin-bottom: 12px; }
+.L .tr.th > span:last-child { color: var(--sign); }
