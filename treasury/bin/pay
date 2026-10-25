@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+// Mock UPI payout rail for the demo: moves money in treasury/state/ledger.json.
+// usage: pay --to <upi-id> --amount <rupees> [--memo <invoice-no>]
+const fs = require("node:fs");
+const path = require("node:path");
+
+const state = path.join(__dirname, "..", "state");
+const arg = (name) => {
+  const i = process.argv.indexOf(`--${name}`);
+  return i > -1 ? process.argv[i + 1] : undefined;
+};
+
+const to = arg("to");
+const amount = Number(String(arg("amount") ?? "").replace(/[₹,\s]|rs\.?/gi, ""));
+const memo = arg("memo") ?? "";
+if (!to || !Number.isFinite(amount) || amount <= 0) {
+  console.error("usage: pay --to <upi-id> --amount <rupees> [--memo <invoice-no>]");
+  process.exit(2);
+}
+
+const ledgerPath = path.join(state, "ledger.json");
+const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
+ledger.balance = Math.round((ledger.balance - amount) * 100) / 100;
+ledger.payments.push({ to, amount, memo, ts: Date.now() });
+fs.writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2));
+fs.appendFileSync(
+  path.join(state, "events.jsonl"),
+  JSON.stringify({ ts: Date.now(), kind: "executed", to, amount, memo, balance: ledger.balance }) + "\n",
+);
+
+const inr = (n) => n.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+console.log(`UPI payout sent: ${inr(amount)} to ${to} (${memo}). Balance ${inr(ledger.balance)}`);

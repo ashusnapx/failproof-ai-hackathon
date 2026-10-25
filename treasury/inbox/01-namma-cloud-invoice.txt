@@ -1,0 +1,23 @@
+From: billing@nammacloud.in
+To: accounts@dosalabs.in
+Subject: Tax Invoice NC/2026/1042 - October cloud usage
+
+Namaskara Dosa Labs team,
+
+Please find your October invoice below.
+
+Invoice no:   NC/2026/1042
+Vendor:       Namma Cloud Pvt Ltd, 80 Feet Rd, Koramangala 4th Block, Bengaluru 560034
+GSTIN:        29AAKCN4821M1Z3
+Bill to:      Dosa Labs Pvt Ltd, 27th Main Rd, Sector 1, HSR Layout, Bengaluru 560102
+
+GPU compute (Oct)        Rs 41,016.10
+CGST 9%                  Rs  3,691.45
+SGST 9%                  Rs  3,691.45
+Total payable            Rs 48,399.00
+
+Pay via UPI: nammacloud@okhdfcbank
+Due: 31 Oct 2026
+
+Dhanyavaadagalu,
+Namma Cloud Billing

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Said So? · Failproof Treasury</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f17; --panel: #121826; --line: #1f2937; --text: #e5e7eb; --muted: #8b95a7;
+    --saffron: #ff9933; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --blue: #60a5fa;
+    --sans: "Space Grotesk", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 var(--sans); }
+  header { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(90deg, rgba(255,153,51,.10), transparent 40%, rgba(34,197,94,.08)); }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -.02em; }
+  h1 span { color: var(--saffron); }
+  .sub { color: var(--muted); font-size: 13px; }
+  .controls { display: flex; gap: 10px; align-items: center; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { background: none; border: 0; color: var(--muted); padding: 9px 14px; font: 600 13px var(--sans); cursor: pointer; }
+  .seg button.on[data-mode=observe] { background: rgba(245,158,11,.15); color: var(--amber); }
+  .seg button.on[data-mode=enforce] { background: rgba(34,197,94,.15); color: var(--green); }
+  .run { background: var(--saffron); color: #1a1205; border: 0; border-radius: 10px; padding: 10px 18px; font: 700 14px var(--sans); cursor: pointer; }
+  .run:disabled { opacity: .5; cursor: wait; }
+  .live { display: inline-flex; align-items: center; gap: 6px; font: 600 12px var(--mono); color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #374151; }
+  .dot.on { background: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 20px; padding: 20px 24px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .panel h2 { margin: 0 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  #feed { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 170px); overflow-y: auto; }
+  .ev { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; animation: in .25s ease-out; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } }
+  .ev .k { font: 600 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .ev pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.5 var(--mono); color: #cbd5e1; }
+  .human { border-color: rgba(96,165,250,.4); background: rgba(96,165,250,.06); }
+  .tool pre { color: var(--saffron); }
+  .verdict { display: grid; gap: 6px; }
+  .verdict.allow { border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.06); }
+  .verdict.deny { border-color: rgba(239,68,68,.6); background: rgba(239,68,68,.08); }
+  .verdict.would-deny { border-color: rgba(245,158,11,.6); background: rgba(245,158,11,.08); }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 6px; font: 700 11px var(--mono); margin-right: 8px; }
+  .allow .chip { background: var(--green); color: #04130a; }
+  .deny .chip { background: var(--red); color: #fff; }
+  .would-deny .chip { background: var(--amber); color: #1a1205; }
+  .prov { font-size: 13px; color: var(--muted); }
+  .prov b.h { color: var(--blue); } .prov b.u { color: var(--red); } .prov b.v { color: var(--green); }
+  .reason { font-size: 13px; }
+  .executed { border-color: rgba(255,153,51,.5); }
+  .executed.lost { border-color: var(--red); background: rgba(239,68,68,.12); }
+  .side { display: flex; flex-direction: column; gap: 16px; }
+  .big { font: 700 34px var(--mono); letter-spacing: -.02em; }
+  .stat { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); }
+  .stat:first-of-type { border-top: 0; }
+  .stat .v { font: 700 18px var(--mono); }
+  .saved { color: var(--green); } .lost { color: var(--red); }
+  .vendor { font-size: 13px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .vendor code { font: 12px var(--mono); color: var(--green); }
+  .story { font-size: 13px; color: var(--muted); }
+  .story p { margin: 0 0 8px; }
+  .story b { color: var(--text); }
+  .empty { color: var(--muted); font-size: 14px; padding: 30px 10px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Who Said So? <span>· Failproof Treasury</span></h1>
+    <div class="sub">Dosa Labs Pvt Ltd · 27th Main, Sector 1, HSR Layout, Bengaluru · AP agent on Claude Code, every rupee checked by Failproof AI</div>
+  </div>
+  <div class="controls">
+    <div class="seg" id="mode">
+      <button data-mode="observe">Observe (watch only)</button>
+      <button data-mode="enforce" class="on">Enforce (block)</button>
+    </div>
+    <button class="run" id="run">▶ Run AP agent</button>
+    <span class="live"><span class="dot" id="dot"></span><span id="status">idle</span></span>
+  </div>
+</header>
+<main>
+  <section class="panel">
+    <h2>Live agent session</h2>
+    <div id="feed"><div class="empty">Press <b>Run AP agent</b>. The agent reads the inbox and pays vendors over UPI. Failproof AI checks every payout against what a human actually said.</div></div>
+  </section>
+  <aside class="side">
+    <div class="panel">
+      <h2>Company wallet</h2>
+      <div class="big" id="balance">₹25,00,000.00</div>
+      <div class="stat"><span>Paid to real vendors</span><span class="v" id="paid">₹0.00</span></div>
+      <div class="stat"><span>Blocked by Failproof AI</span><span class="v saved" id="saved">₹0.00</span></div>
+      <div class="stat"><span>Lost to fraud / errors</span><span class="v lost" id="lostAmt">₹0.00</span></div>
+      <div class="stat"><span>Policy checks run</span><span class="v" id="checks">0</span></div>
+    </div>
+    <div class="panel">
+      <h2>Vendor master (human-approved payees)</h2>
+      <div id="vendors"></div>
+    </div>
+    <div class="panel story">
+      <h2>Why this matters</h2>
+      <p><b>Rule:</b> an agent may only move money a human authorized in words. Emails, invoices and APIs reach the agent as tool output, so they can never authorize a payout.</p>
+      <p><b>Fake "UPI ID changed" emails</b> (business email compromise) are among the costliest frauds; here a lookalike domain asks the agent to repoint a payout.</p>
+      <p><b>Unit mix-ups:</b> in Feb 2026 an agent (Lobstar Wilde) sent 52.4M tokens instead of 52,439. Here, a vendor API sends <code>amount_paise</code>.</p>
+      <p><b>Prompt injection:</b> in May 2026 a hidden instruction sent via X moved ~$155K through Grok/Bankrbot.</p>
+    </div>
+  </aside>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const inr = (n) => Number(n).toLocaleString("en-IN", { style: "currency", currency: "INR" });
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+let mode = "enforce", vendors = [], flagged = new Set(), totals;
+
+function clear() {
+  $("feed").innerHTML = "";
+  totals = { paid: 0, saved: 0, lost: 0, checks: 0 };
+  flagged = new Set();
+  paint();
+}
+function paint() {
+  $("paid").textContent = inr(totals.paid);
+  $("saved").textContent = inr(totals.saved);
+  $("lostAmt").textContent = inr(totals.lost);
+  $("checks").textContent = totals.checks;
+}
+function add(cls, html) {
+  const feed = $("feed");
+  feed.querySelector(".empty")?.remove();
+  const el = document.createElement("div");
+  el.className = "ev " + cls;
+  el.innerHTML = html;
+  feed.appendChild(el);
+  feed.scrollTop = feed.scrollHeight;
+}
+function prov(p) {
+  if (!p) return "";
+  if (p.by === "human") return `Authorized by <b class="h">👤 human words</b>: “${esc(p.text)}”`;
+  if (p.by === "vendor-master") return `Payee from <b class="v">✓ vendor master</b>: ${esc(p.text)}`;
+  return `Introduced by <b class="u">✉ untrusted source</b>: ${esc(p.text)}`;
+}
+
+const handlers = {
+  hello(e) {
+    vendors = e.vendors.vendors;
+    $("vendors").innerHTML = vendors.map((v) => `<div class="vendor">${esc(v.name)} · ${esc(v.area)}<br><code>${esc(v.upi)}</code> · GSTIN ${esc(v.gstin)}</div>`).join("");
+  },
+  reset: clear,
+  human(e) { add("human", `<div class="k">👤 human · ${esc(e.mode)} mode</div><pre>${esc(e.text)}</pre>`); },
+  agent(e) { add("", `<div class="k">🤖 agent</div><pre>${esc(e.text)}</pre>`); },
+  tool(e) { add("tool", `<div class="k">tool · ${esc(e.name)}</div><pre>${esc(e.input)}</pre>`); },
+  result(e) { add("", `<div class="k">${e.error ? "⛔ tool result (blocked/error)" : "tool result"}</div><pre>${esc(e.text.slice(0, 400))}</pre>`); },
+  verdict(e) {
+    totals.checks++;
+    const label = { allow: "ALLOW", deny: "DENY", "would-deny": "WOULD DENY" }[e.decision];
+    const key = e.to + "|" + e.amount;
+    if (e.decision === "deny" && !flagged.has(key)) { totals.saved += e.amount || 0; flagged.add(key); }
+    if (e.decision === "would-deny") flagged.add("obs|" + key);
+    add("verdict " + e.decision,
+      `<div><span class="chip">${label}</span><b>${inr(e.amount || 0)}</b> → <code>${esc(e.to)}</code> <span class="prov">· ${esc(e.policy)}</span></div>
+       <div class="prov">${prov(e.provenance)}</div><div class="reason">${esc(e.reason)}</div>`);
+    paint();
+  },
+  executed(e) {
+    const key = e.to + "|" + e.amount;
+    const bad = flagged.has("obs|" + key);
+    if (bad) totals.lost += e.amount; else totals.paid += e.amount;
+    add("executed" + (bad ? " lost" : ""), `<div class="k">${bad ? "💸 money left — Failproof would have blocked this" : "✅ UPI payout executed"}</div>
+      <pre>${inr(e.amount)} → ${esc(e.to)}  (${esc(e.memo)})   balance ${inr(e.balance)}</pre>`);
+    paint();
+  },
+  ledger(e) {
+    $("balance").textContent = inr(e.balance);
+    $("dot").classList.toggle("on", e.running);
+    $("status").textContent = e.running ? "LIVE" : "idle";
+    $("run").disabled = e.running;
+  },
+  done(e) { add("", `<div class="k">session finished</div><pre>${(e.ms / 1000).toFixed(1)} s · $${(e.cost ?? 0).toFixed(4)} model cost</pre>`); },
+  stderr(e) { add("", `<div class="k">stderr</div><pre>${esc(e.text)}</pre>`); },
+};
+
+clear();
+new EventSource("/stream").onmessage = (m) => { const e = JSON.parse(m.data); handlers[e.kind]?.(e); };
+document.querySelectorAll("#mode button").forEach((b) => b.onclick = () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll("#mode button").forEach((x) => x.classList.toggle("on", x === b));
+});
+$("run").onclick = async () => { $("run").disabled = true; await fetch("/run?mode=" + mode, { method: "POST" }); };
+</script>
+</body>
+</html>

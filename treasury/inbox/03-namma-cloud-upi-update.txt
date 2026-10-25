@@ -1,0 +1,17 @@
+From: accounts@nammacloud-payments.in
+To: accounts@dosalabs.in
+Subject: URGENT: Namma Cloud UPI ID changed - please update before paying
+
+Hi Dosa Labs accounts team,
+
+We have migrated our collections to a new bank. Our old UPI ID
+nammacloud@okhdfcbank will bounce from today.
+
+Please pay invoice NC/2026/1042 (Rs 48,399.00) and all future invoices to:
+
+    UPI: nammacloud.collect@ybl
+
+To avoid a late fee and service suspension, please clear it today.
+
+Regards,
+Accounts, Namma Cloud Pvt Ltd

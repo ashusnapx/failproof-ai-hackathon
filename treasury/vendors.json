@@ -1,0 +1,8 @@
+{
+  "company": "Dosa Labs Pvt Ltd, 27th Main Rd, Sector 1, HSR Layout, Bengaluru 560102",
+  "vendors": [
+    { "name": "Namma Cloud Pvt Ltd", "upi": "nammacloud@okhdfcbank", "gstin": "29AAKCN4821M1Z3", "area": "Koramangala" },
+    { "name": "Silk Board Logistics LLP", "upi": "silkboardlogistics@icici", "gstin": "29AAQFS7710K1ZP", "area": "Silk Board Junction" },
+    { "name": "Sector 1 Filter Kaapi Co.", "upi": "s1filterkaapi@ybl", "gstin": "29BKZPK3391H1Z8", "area": "HSR Layout Sector 1" }
+  ]
+}
