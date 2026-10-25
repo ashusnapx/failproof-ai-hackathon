@@ -5,19 +5,23 @@
       "name": "Namma Cloud Pvt Ltd",
       "upi": "nammacloud@okhdfcbank",
       "gstin": "29AAKCN4821M1Z3",
-      "area": "Koramangala"
+      "area": "Koramangala",
+      "typical": 50000
     },
     {
       "name": "Silk Board Logistics LLP",
       "upi": "silkboardlogistics@icici",
       "gstin": "29AAQFS7710K1ZP",
-      "area": "Silk Board Junction"
+      "area": "Silk Board Junction",
+      "typical": 130000,
+      "requiresProof": true
     },
     {
       "name": "Sector 1 Filter Kaapi Co.",
       "upi": "s1filterkaapi@ybl",
       "gstin": "29BKZPK3391H1Z8",
-      "area": "HSR Layout Sector 1"
+      "area": "HSR Layout Sector 1",
+      "typical": 7000
     }
   ]
 }

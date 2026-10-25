@@ -29,4 +29,13 @@ fs.appendFileSync(
 );
 
 const inr = (n) => n.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+// Flaky-rail demo: money has left, but the API times out, so the agent cannot tell and may retry.
+let rail = {};
+try {
+  rail = JSON.parse(fs.readFileSync(path.join(state, "rail.json"), "utf8"));
+} catch {}
+if (rail.mode === "timeout-after-debit") {
+  console.error(`ERROR: UPI rail timed out after 30s for ${memo || to}; payout status unknown.`);
+  process.exit(1);
+}
 console.log(`UPI payout sent: ${inr(amount)} to ${to} (${memo}). Balance ${inr(ledger.balance)}`);
