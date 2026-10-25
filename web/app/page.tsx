@@ -135,14 +135,15 @@ export default function Page() {
   const savedFlash = useFlash(s.totals.saved);
   const paidFlash = useFlash(s.totals.paid);
   const shownMode = s.runMode ?? mode;
+  const said = [...s.items].reverse().find((i) => i.e.provenance?.by === "human")?.e.provenance?.text;
 
   return (
     <>
       <header className="mast">
         <div>
-          <h1 className="title serif">Who said <em>so?</em></h1>
+          <h1 className="title">Who Said So?<span className="kn">ಯಾರು ಹೇಳಿದರು?</span></h1>
           <div className="byline">
-            <b>Failproof Treasury</b> · AP agent on Claude Code for <b>Dosa Labs Pvt Ltd</b>, 27th Main Rd, Sector 1, HSR Layout, Bengaluru 560102
+            <b>Dosa Labs</b> · HSR Layout, Bengaluru · AP agent guarded by <b>Failproof AI</b>
           </div>
         </div>
         <div className="controls">
@@ -150,7 +151,6 @@ export default function Page() {
             {(["observe", "enforce"] as const).map((m) => (
               <button key={m} role="radio" aria-checked={mode === m} className={`${m} ${mode === m ? "on" : ""}`} onClick={() => setMode(m)} disabled={busy}>
                 <b>{m === "observe" ? <Eye size={20} /> : <ShieldCheck size={20} />}{m === "observe" ? "Observe" : "Enforce"}</b>
-                <span>{m === "observe" ? "Log verdicts, let money move" : "Block unauthorised payouts"}</span>
               </button>
             ))}
           </div>
@@ -166,55 +166,46 @@ export default function Page() {
       <main className="stage">
         <section className="feedcol" aria-label="Live agent session">
           <div className="feedbar">
-            <h2>Live agent session</h2>
-            {error ? <span style={{ color: "var(--stop)" }}>{error}</span> : null}
+            <h2>Live session</h2>
+            {error ? <span style={{ color: "var(--danger)" }}>{error}</span> : null}
             <span className={`modeflag ${shownMode}`}>
               {shownMode === "observe" ? <Eye size={16} /> : <ShieldCheck size={16} />}
-              {shownMode === "observe" ? "OBSERVE: Failproof AI watches, money still moves" : "ENFORCE: Failproof AI blocks what no human authorized"}
+              {shownMode === "observe" ? "Watching only" : "Blocking"}
             </span>
           </div>
           <div className="feed" ref={feedRef}>
             {s.items.length === 0 ? (
               <div className="empty">
-                <h2 className="serif">Every rupee needs a human&rsquo;s words.</h2>
-                <p>Pick a mode and press <b>Run AP agent</b>. The agent reads the inbox and pays vendors over UPI; Failproof AI checks every payout against what a person actually said.</p>
+                <h2>Every rupee needs a human&rsquo;s words.</h2>
               </div>
             ) : (
-              s.items.map((it) => <Event key={it.id} item={it} />)
+              s.items.filter((it) => it.e.kind !== "result" || it.e.error).map((it) => <Event key={it.id} item={it} />)
             )}
           </div>
         </section>
 
         <aside className="side">
-          <div className="block">
+          <div className="block wallet">
             <h3>Company wallet</h3>
             <div key={`b${lostFlash}`} className={`balance num ${lostFlash ? "hit" : ""}`}>{inr(balance)}</div>
-            <div className="opening">Opening balance {inr(s.opening)}</div>
-            <Stat flash={paidFlash} cls="" icon={<CircleCheck size={18} color="var(--leaf)" />} label="Paid to real vendors" value={s.totals.paid} />
-            <Stat flash={savedFlash} cls="saved" icon={<ShieldX size={18} color="var(--leaf)" />} label="Blocked by Failproof AI" value={s.totals.saved} />
-            <Stat flash={lostFlash} cls="lost" icon={<Flame size={18} color="var(--stop)" />} label="Lost to fraud / errors" value={s.totals.lost} />
-            <div className="row">
-              <span><ShieldCheck size={18} color="var(--muted)" />Policy checks run</span>
-              <span className="num">{s.totals.checks}</span>
-            </div>
+            <Stat flash={paidFlash} cls="" icon={<CircleCheck size={18} />} label="Paid" value={s.totals.paid} />
+            <Stat flash={savedFlash} cls="saved" icon={<ShieldX size={18} />} label="Blocked" value={s.totals.saved} />
+            <Stat flash={lostFlash} cls="lost" icon={<Flame size={18} />} label="Lost" value={s.totals.lost} />
+          </div>
+
+          <div className="block said">
+            <h3>Who said so?</h3>
+            {said ? <q>{said}</q> : <span className="none">Nobody yet.</span>}
           </div>
 
           <div className="block">
-            <h3>Vendor master · human-approved payees</h3>
+            <h3>Approved payees</h3>
             {s.vendors.map((v) => (
               <div className="vendor" key={v.upi}>
-                <b>{v.name}</b> <span className="area">· {v.area}</span>
-                <div className="meta"><span className="num upi">{v.upi}</span><span className="num">GSTIN {v.gstin}</span></div>
+                <b>{v.name}</b>
+                <div className="meta"><span className="num upi">{v.upi}</span></div>
               </div>
             ))}
-          </div>
-
-          <div className="block why">
-            <h3>Why this matters</h3>
-            <p className="rule serif">An agent may only move money a human authorized in words. Emails, invoices and APIs reach it as tool output, so they can never authorize a payout.</p>
-            <p><b>Fake &ldquo;UPI ID changed&rdquo; emails.</b> Business email compromise is among the costliest frauds; here a lookalike domain asks the agent to repoint a payout.</p>
-            <p><b>Unit mix-ups.</b> In Feb 2026 the Lobstar Wilde agent sent 52.4M tokens instead of 52,439. Here a vendor API sends <code>amount_paise</code>.</p>
-            <p><b>Prompt injection.</b> In May 2026 a hidden instruction moved ~$155K through Grok and Bankrbot.</p>
           </div>
         </aside>
       </main>
@@ -272,14 +263,16 @@ function Event({ item }: { item: Item }) {
       const Icon = { allow: ShieldCheck, deny: ShieldX, "would-deny": ShieldAlert }[d];
       return (
         <div className={`ev verdict ${d}`}>
-          <div className="vhead">
-            <span className="stamp"><Icon size={22} />{label}</span>
-            <span className="vamt num">{inr(e.amount || 0)}</span>
-            <span className="vto"><ArrowRight size={20} /><span className="num">{e.to}</span></span>
-            <span className="vpolicy">Failproof AI · {e.policy}</span>
+          <div className="stamp"><Icon size={30} /><span>{label}</span></div>
+          <div className="vbody">
+            <div className="vhead">
+              <span className="vamt">{inr(e.amount || 0)}</span>
+              <span className="vto"><ArrowRight size={20} /><span className="num">{e.to}</span></span>
+              <span className="vpolicy">Failproof AI · {e.policy}</span>
+            </div>
+            <Prov p={e.provenance} />
+            {d !== "allow" ? <div className="reason">{e.reason?.split(". ")[0]}.</div> : null}
           </div>
-          <Prov p={e.provenance} />
-          <div className="reason">{e.reason}</div>
         </div>
       );
     }
