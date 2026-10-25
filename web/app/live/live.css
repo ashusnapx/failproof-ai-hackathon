@@ -1,0 +1,4 @@
+/* /live only: Gmail live-sync toggle on the Inbox board */
+.A .gm { display: flex; gap: 6px; align-items: center; }
+.A .crud button.gmail { width: auto; padding: 0 10px; font: 400 12px var(--font-board); }
+.A .crud button.gmail.on { background: var(--danger); color: #fff; }

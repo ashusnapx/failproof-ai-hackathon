@@ -4,6 +4,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Check, Mail, Pencil, Play, Plus, ShieldCheck, Snowflake, Trash2, User, X } from "lucide-react";
 import { Mark } from "../logo";
+import "./live.css";
 
 type Mode = "observe" | "enforce";
 type Vendor = { name: string; upi: string; gstin: string; area: string };
@@ -73,6 +74,10 @@ function payouts(items: Item[]): Payout[] {
   const map = new Map<string, Payout>();
   for (const { e, lost } of items) {
     if (e.kind !== "verdict" && e.kind !== "executed") continue;
+    if (e.policy === "treasury-agent-sandbox") {
+      map.set(`sb${e.ts}`, { key: `sb${e.ts}`, to: "agent sandbox", amount: 0, memo: "", status: "blocked", reason: e.reason, policy: e.policy, checks: 1 });
+      continue;
+    }
     const key = `${e.to}|${e.amount}`;
     const p = map.get(key) ?? { key, to: e.to ?? "", amount: e.amount ?? 0, memo: "", status: "checking" as const, checks: 0 };
     if (e.memo) p.memo = e.memo;
@@ -307,6 +312,19 @@ function Payees({ vendors }: { vendors: Vendor[] }) {
 // Inbox: what the agent reads. Anything here is untrusted tool output, never authorization.
 function Inbox({ inbox }: { inbox: Email[] }) {
   const [edit, setEdit] = useState<string | null>(null); // id being edited, "" = new
+  const [live, setLive] = useState(false);
+  const [gmErr, setGmErr] = useState("");
+  useEffect(() => {
+    if (!live) return;
+    const pull = async () => {
+      const r = await fetch("/api/gmail", { method: "POST" }).catch(() => null);
+      const j = r ? ((await r.json().catch(() => ({}))) as { error?: string }) : { error: "server not reachable" };
+      setGmErr(j.error ?? "");
+    };
+    pull();
+    const t = setInterval(pull, 15_000);
+    return () => clearInterval(t);
+  }, [live]);
   const [form, setForm] = useState({ from: "", subject: "", body: "" });
   const [err, setErr] = useState("");
   const open = (m?: Email) => {
@@ -329,7 +347,14 @@ function Inbox({ inbox }: { inbox: Email[] }) {
   );
   return (
     <div className="board crud inbox">
-      <div className="crud-head"><span className="lbl">Inbox · untrusted</span><button onClick={() => open()} aria-label="Add email"><Plus size={16} /></button></div>
+      <div className="crud-head">
+        <span className="lbl">Inbox · untrusted</span>
+        <span className="gm">
+          <button className={`gmail ${live ? "on" : ""}`} onClick={() => setLive(!live)} aria-pressed={live} title="Pull the newest payment emails from Gmail every 15 s">Gmail{live ? " ●" : ""}</button>
+          <button onClick={() => open()} aria-label="Add email"><Plus size={16} /></button>
+        </span>
+      </div>
+      {gmErr ? <div className="crud-err">{gmErr}</div> : null}
       {edit === "" ? editor : null}
       {inbox.map((m) => edit === m.id ? <div key={m.id}>{editor}</div> : (
         <div className="crud-row" key={m.id}>

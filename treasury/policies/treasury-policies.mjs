@@ -2,7 +2,7 @@
 // Text that reached the agent through a tool (emails, invoices, APIs) never counts as authorization.
 import { customPolicies, allow, deny } from "failproofai";
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 const PAY = /(?:^|[\s/])bin\/pay\b/;
 const inr = (n) => n.toLocaleString("en-IN", { style: "currency", currency: "INR" });
@@ -140,6 +140,43 @@ function autoFreeze(dir) {
     // shortcut: containment is best-effort; each deny above still applies.
   }
 }
+
+// Least privilege for the TruePe AP agent only: sessions whose human prompt is the AP instruction.
+// Inbox mail is public input during a live demo, so the agent may read treasury/ and run the pay rail, nothing else.
+const AP_PROMPT = /accounts-payable agent for Dosa Labs/;
+customPolicies.add({
+  name: "treasury-agent-sandbox",
+  description: "The AP agent may only read treasury/ files and run the pay rail; an email cannot make it run, read or send anything else",
+  category: "Payments",
+  defaultEnabled: true,
+  match: { events: ["PreToolUse"] },
+  fn: async (ctx) => {
+    const dir = treasuryDir(ctx);
+    if (!dir || !humanWords(ctx.session?.transcriptPath).some((w) => AP_PROMPT.test(w))) return allow();
+    const cwd = String(ctx.session?.cwd ?? "");
+    const inside = (p) => {
+      const abs = resolve(cwd, String(p ?? "."));
+      return abs === dir || abs.startsWith(dir + sep);
+    };
+    const tool = ctx.toolName ?? "";
+    const input = ctx.toolInput ?? {};
+    let why = null;
+    if (tool === "Bash") {
+      const cmd = String(input.command ?? "").replace(/\s2>&1/g, "").trim();
+      const safe = cmd.split(/&&|\n/).map((p) => p.trim()).filter(Boolean).every((p) =>
+        /^(\.\/)?treasury\/bin\/pay\s[^;|&`$<>()]*$/.test(p) ||
+        (/^(ls|cat|head)(\s[^;|&`$<>()]*)?$/.test(p) && p.split(/\s+/).slice(1).filter((a) => !a.startsWith("-")).every(inside)));
+      if (!safe) why = `the AP agent may only run the pay rail or read treasury/ (tried: ${cmd.slice(0, 80)})`;
+    } else if (["Read", "Glob", "Grep", "LS"].includes(tool)) {
+      const p = input.file_path ?? input.path ?? input.pattern ?? ".";
+      if (!inside(p)) why = `the AP agent may only read inside treasury/ (tried: ${String(p).slice(0, 80)})`;
+    } else if (tool) {
+      why = `${tool} is not allowed for the AP agent`;
+    }
+    if (!why) return allow();
+    return decide(dir, "treasury-agent-sandbox", { to: "", amount: 0, memo: "" }, { ok: false, reason: why, provenance: { by: "untrusted", text: "sandbox" } }, true) ?? allow();
+  },
+});
 
 customPolicies.add({
   name: "treasury-kill-switch",
