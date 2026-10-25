@@ -26,3 +26,13 @@
 .bills .tag { display: inline-block; margin-left: 8px; padding: 1px 6px; border-radius: 3px; background: #1a1a1a; color: #f6c700; font: 400 11px var(--font-board); vertical-align: 2px; }
 .bills .sum { display: flex; flex-wrap: wrap; gap: 18px; color: #e6dbc2; font-weight: 600; }
 .bills .sum b { font: 400 20px var(--font-board); color: #f6c700; }
+/* embedded as the Bills tab on /live */
+.bills.embedded { min-height: 0; background: transparent; color: inherit; display: grid; gap: 10px; }
+.bills.embedded .acts button, .bills.embedded .budget { padding: 8px 12px; font-size: 13px; }
+.bills.embedded .budget input { width: 96px; font-size: 15px; }
+.bills.embedded .sum { color: inherit; gap: 12px; font-size: 13px; }
+.bills.embedded .sum b { font-size: 15px; color: inherit; }
+.bills.embedded .bill { grid-template-columns: 96px 1fr auto; box-shadow: 0 3px 0 rgba(0,0,0,.2); }
+.bills.embedded .stamp { font-size: 13px; padding: 8px; }
+.bills.embedded .body { padding: 8px 10px; font-size: 13px; }
+.bills.embedded .amt { font-size: 17px; padding: 0 10px; }

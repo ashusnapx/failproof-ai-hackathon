@@ -2,8 +2,9 @@
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Bot, Check, Mail, Pencil, Play, Plus, ShieldCheck, Snowflake, Trash2, TriangleAlert, User, X } from "lucide-react";
+import { BadgeCheck, Bot, Check, CircleCheck, LoaderCircle, Mail, Pencil, Play, Plus, ShieldCheck, ShieldX, Snowflake, Trash2, TriangleAlert, User, X } from "lucide-react";
 import { Mark } from "../logo";
+import { BillsPanel } from "../bills/panel";
 import "./live.css";
 
 type Mode = "observe" | "enforce";
@@ -194,53 +195,70 @@ export default function Page() {
   const done = s.items.some((i) => i.e.kind === "done");
   const report = done ? s.items.findLast((i) => i.e.kind === "agent")?.e.text : undefined;
   const auto = data.frozenBy?.startsWith("auto");
+  const state = error ? "error" : busy ? "live" : done ? "done" : "idle";
+  const count = (st: Payout["status"]) => list.filter((p) => !p.note && p.status === st).length;
 
   return (
     <main className="A">
-      <header className="mast">
+      <header className="top">
         <div className="brand">
-          <Link href="/" aria-label="TruePe home"><Mark size={46} /></Link>
+          <Link href="/" aria-label="TruePe home"><Mark size={36} /></Link>
           <div>
-            <h1>TruePe · Dosa Labs</h1>
-            <small>27th Main, Sector 1, HSR Layout · AP agent on Claude Code · enforced by <a href="https://befailproof.ai" target="_blank" rel="noreferrer">Failproof AI ↗</a> · <Link href="/coverage">Coverage</Link></small>
+            <b>TruePe Live</b>
+            <small>Dosa Labs AP agent · <a href="https://befailproof.ai" target="_blank" rel="noreferrer">Failproof AI ↗</a> · <Link href="/coverage">Coverage</Link></small>
           </div>
         </div>
-        <div className="controls">
-          <label className="say" title="Budget the human approves for this run">
+        <div className="run">
+          <label className="say" title="The human's words: the only thing that authorizes spend">
             Approved budget for this run: ₹<input value={budget} onChange={(e) => setBudget(e.target.value.replace(/[^\d,]/g, "").slice(0, 12))} disabled={busy} aria-label="Approved budget in rupees" />
           </label>
           <div className="seg" role="group" aria-label="Mode">
             {(["observe", "enforce"] as const).map((m) => (
-              <button key={m} onClick={() => setMode(m)} disabled={busy} aria-pressed={mode === m}>{m === "observe" ? "Observe" : "Enforce"}</button>
+              <button key={m} onClick={() => setMode(m)} disabled={busy} aria-pressed={mode === m} title={m === "observe" ? "Failproof only watches: would-block payouts still go through" : "Failproof blocks payouts nobody authorized"}>
+                {m === "observe" ? "Observe" : "Enforce"}
+              </button>
             ))}
           </div>
-          <button className="go" onClick={start} disabled={busy}><Play size={16} fill="currentColor" />{busy ? "Live" : "Run"}</button>
+          <button className="go" onClick={start} disabled={busy}>{busy ? <LoaderCircle size={16} className="spin" /> : <Play size={16} fill="currentColor" />}{busy ? "Running" : "Run"}</button>
+        </div>
+        <div className="right">
+          <span className={`status ${state}`} role="status"><i />{error || now || "Ready"}</span>
           <button className={`freeze ${data.frozen ? "on" : ""}`} onClick={() => send("/api/freeze", "POST", { frozen: !data.frozen })}>
             <Snowflake size={16} />{data.frozen ? "Unfreeze" : "Freeze"}
           </button>
         </div>
       </header>
 
-      <section className="feed" ref={feedRef}>
-        {data.frozen ? (
-          <div className="frozen"><Snowflake size={22} /> All payouts frozen {auto ? <>by Failproof AI <small>{data.frozenBy?.replace(/^auto:\s*/, "")}</small></> : "by a human"}</div>
-        ) : null}
-        <div className={`now ${busy ? "on" : ""}`}>{error || now || "Type a budget, pick a mode, press Run."}</div>
-        {list.map((p) => (p.note ? <Note key={p.key} p={p} /> : <Slip key={p.key} p={p} />))}
-        {report ? <div className="report"><span className="lbl"><Bot size={14} /> The agent&rsquo;s report to you</span><p>{report.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim()}</p></div> : null}
+      <section className="kpis" aria-label="Money">
+        <div><small>Company wallet</small><b>{inr0(balance)}</b></div>
+        <div className="paid"><small>Paid to vendors</small><b>{inr0(s.totals.paid)}</b></div>
+        <div className="guard"><small>Blocked by Failproof</small><b>{inr0(s.totals.saved)}</b></div>
+        <div className={s.totals.lost ? "lost" : ""}><small>Lost to fraud</small><b>{inr0(s.totals.lost)}</b></div>
+        <div className="said"><small><User size={13} /> Who said so</small>{said ? <q>{said}</q> : <span>No human words read yet</span>}</div>
       </section>
 
-      <aside className="side">
-        <div className="card ledger">
-          <span className="lbl">Company wallet</span>
-          <div className="big">{inr0(balance)}</div>
-          <div className="trio">
-            <span><small>Paid to vendors</small><b>{inr0(s.totals.paid)}</b></span>
-            <span><small>Blocked by Failproof</small><b>{inr0(s.totals.saved)}</b></span>
-            <span className={s.totals.lost ? "bad" : ""}><small>Lost to fraud</small><b>{inr0(s.totals.lost)}</b></span>
-          </div>
-          <p className="said"><User size={14} />{said ? <>Who said so: <q>{said}</q></> : "No human words read yet."}</p>
+      <div className="main">
+        <div className="feed-head">
+          <h2>Payout attempts</h2>
+          {list.length ? <span className="counts">{count("paid")} paid · {count("blocked")} blocked{count("lost") ? ` · ${count("lost")} lost` : ""}</span> : null}
         </div>
+        <section className="feed" ref={feedRef}>
+          {data.frozen ? (
+            <div className="frozen"><Snowflake size={20} /> All payouts frozen {auto ? <>by Failproof AI <small>{data.frozenBy?.replace(/^auto:\s*/, "")}</small></> : "by a human"}</div>
+          ) : null}
+          {list.length === 0 ? (
+            <div className="empty">
+              <Mark size={44} />
+              <b>{busy ? "Waiting for the first payout…" : "No payouts yet"}</b>
+              <span>{busy ? "The agent is reading the inbox. Every payout it tries shows up here with Failproof AI's verdict." : "Set the budget the agent may spend, pick Observe (watch only) or Enforce (Failproof blocks), then press Run."}</span>
+            </div>
+          ) : null}
+          {list.map((p) => (p.note ? <Note key={p.key} p={p} /> : <Slip key={p.key} p={p} />))}
+          {report ? <div className="report"><span className="lbl"><Bot size={14} /> The agent&rsquo;s report to you</span><p>{report.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim()}</p></div> : null}
+        </section>
+      </div>
+
+      <aside className="side">
         <Evals card={(s.items.findLast((i) => i.e.kind === "eval")?.e as unknown as Card) ?? null} history={data.history} running={busy} />
         <Tabs data={data} items={s.items} />
       </aside>
@@ -282,13 +300,14 @@ function Evals({ card, history, running }: { card: Card | null; history: Card[];
 
 // Policies, payees and inbox share one card. Panels stay mounted so Gmail sync keeps running on any tab.
 function Tabs({ data, items }: { data: Data; items: Item[] }) {
-  const [tab, setTab] = useState<"policies" | "payees" | "inbox">("policies");
-  const tabs = [["policies", "Policies", data.policies.length], ["payees", "Payees", data.vendors.length], ["inbox", "Inbox", data.inbox.length]] as const;
+  const [tab, setTab] = useState<"bills" | "policies" | "payees" | "inbox">("bills");
+  const tabs = [["bills", "Bills", data.inbox.length], ["policies", "Policies", data.policies.length], ["payees", "Payees", data.vendors.length], ["inbox", "Inbox", data.inbox.length]] as const;
   return (
     <div className="card tabs">
       <div className="tablist" role="tablist">
         {tabs.map(([id, label, n]) => <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}<i>{n}</i></button>)}
       </div>
+      <div className="panel" role="tabpanel" hidden={tab !== "bills"}><BillsPanel /></div>
       <div className="panel" role="tabpanel" hidden={tab !== "policies"}><Policies policies={data.policies} items={items} /></div>
       <div className="panel" role="tabpanel" hidden={tab !== "payees"}><Payees vendors={data.vendors} /></div>
       <div className="panel" role="tabpanel" hidden={tab !== "inbox"}><Inbox inbox={data.inbox} /></div>
@@ -423,7 +442,12 @@ function Inbox({ inbox }: { inbox: Email[] }) {
   );
 }
 
-const STAMP = { checking: "Checking", blocked: "Blocked", paid: "Paid", lost: "Lost" };
+const BADGE = {
+  checking: <><LoaderCircle size={14} className="spin" /> Checking</>,
+  blocked: <><ShieldX size={14} /> Blocked</>,
+  paid: <><CircleCheck size={14} /> Paid</>,
+  lost: <><TriangleAlert size={14} /> Lost</>,
+};
 
 function Slip({ p }: { p: Payout }) {
   const budget = budgetAmount(p.human);
@@ -432,9 +456,13 @@ function Slip({ p }: { p: Payout }) {
   const told = rest.filter((r) => !r.startsWith("It came from")).join(" ");
   return (
     <article className={`slip ${p.status}`} title={p.command ? `Failproof saw: ${p.command}` : undefined}>
-      <span className="stamp">{STAMP[p.status]}</span>
+      <div className="line">
+        <span className={`badge ${p.status}`}>{BADGE[p.status]}</span>
+        <b className="amt">{inr(p.amount)}</b>
+        <code className="to">→ {p.to}</code>
+        {p.memo ? <span className="memo">{p.memo}</span> : null}
+      </div>
       <div className="body">
-        <div className="top"><b className="amt">{inr(p.amount)}</b><code className="to">→ {p.to}{p.memo ? ` · ${p.memo}` : ""}</code></div>
         {p.status === "blocked" || p.status === "lost" ? (
           <p className="why bad">
             {p.source ? <><Mail size={15} /> From <b>{p.source}</b>. </> : null}{why}{p.status === "lost" ? " Failproof would have blocked this." : ""}
