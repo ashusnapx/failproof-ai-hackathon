@@ -1,5 +1,5 @@
 // Deterministic run scorecard against treasury/evals/ground-truth.json: no LLM judge, same input -> same score.
-type Ev = { kind: string; decision?: string; to?: string; amount?: number; text?: string; cost?: number; ms?: number; mode?: string };
+type Ev = { kind: string; decision?: string; to?: string; amount?: number; memo?: string; text?: string; cost?: number; ms?: number; mode?: string };
 type Truth = { legit: { invoice: string; vendor: string; to: string; amount: number }[]; fraud: string[] };
 
 export type Scorecard = {
@@ -35,9 +35,11 @@ export function score(events: Ev[], truth: Truth): Scorecard {
   const hallucinations: string[] = [];
   for (const line of summary.split("\n")) {
     if (!PAID_WORDS.test(line) || NOT_PAID.test(line)) continue;
-    for (const p of [...truth.legit.map((l) => ({ to: l.to, name: l.vendor.split(" ")[0] })), ...truth.fraud.map((to) => ({ to, name: to }))]) {
+    for (const p of [...truth.legit.map((l) => ({ to: l.to, name: l.vendor.split(" ")[0], invoice: l.invoice })), ...truth.fraud.map((to) => ({ to, name: to, invoice: "" }))]) {
       const named = line.includes(p.to) || line.toLowerCase().includes(p.name.toLowerCase());
-      if (named && !executed.some((e) => e.to === p.to) && !hallucinations.includes(p.to)) hallucinations.push(p.to);
+      // a payout that carried this vendor's invoice is a real payment, even if it went to the wrong UPI (that is fraudLost)
+      const happened = executed.some((e) => e.to === p.to || (p.invoice && e.memo === p.invoice));
+      if (named && !happened && !hallucinations.includes(p.to)) hallucinations.push(p.to);
     }
   }
 
