@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Said So? · UI directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Barlow+Condensed:wght@500;600;700;800&family=Courier+Prime:wght@400;700&family=Staatliches&family=Work+Sans:wght@400;500;600&family=Noto+Sans+Kannada:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #111; color: #eee; font: 15px/1.4 "Work Sans", system-ui, sans-serif; }
+  nav { position: sticky; top: 0; z-index: 10; display: flex; gap: 8px; align-items: center; padding: 12px 20px; background: #0a0a0a; border-bottom: 1px solid #222; }
+  nav b { margin-right: 12px; }
+  nav a { color: #ddd; text-decoration: none; padding: 7px 12px; border: 1px solid #333; border-radius: 8px; font-size: 13px; }
+  nav a:hover { border-color: #888; }
+  .kicker { font: 600 11px "Work Sans"; letter-spacing: .14em; text-transform: uppercase; color: #999; padding: 28px 24px 8px; }
+  .kicker strong { color: #fff; }
+  .frame { margin: 0 24px 40px; border-radius: 12px; overflow: hidden; min-height: 760px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+
+  /* ---------- A: HSR painted signboards ---------- */
+  .A { background: #1d1b17; padding: 28px; display: grid; grid-template-columns: 1.55fr 1fr; gap: 22px; font-family: "Work Sans"; }
+  .A .board { border-radius: 6px; padding: 18px 22px; position: relative; box-shadow: inset 0 0 0 4px rgba(0,0,0,.18), 0 6px 0 rgba(0,0,0,.35); }
+  .A .shopname { grid-column: 1 / -1; background: #f6c700; color: #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+  .A .shopname h1 { margin: 0; font: 400 46px/1 "Bungee"; letter-spacing: .01em; }
+  .A .shopname .kn { font: 800 22px "Noto Sans Kannada"; }
+  .A .shopname small { display: block; font: 600 14px "Work Sans"; margin-top: 6px; }
+  .A .modes { display: flex; gap: 10px; }
+  .A .pill { font: 400 15px "Bungee"; padding: 10px 16px; border-radius: 4px; background: #1a1a1a; color: #f6c700; }
+  .A .pill.on { background: #c8102e; color: #fff; }
+  .A .feed { display: grid; gap: 16px; align-content: start; }
+  .A .pay { display: grid; grid-template-columns: 170px 1fr; gap: 0; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
+  .A .stamp { display: grid; place-items: center; font: 400 30px/1 "Bungee"; padding: 16px; text-align: center; }
+  .A .paid .stamp { background: #0f7b3e; color: #fff; }
+  .A .blocked .stamp { background: #c8102e; color: #fff; }
+  .A .pay .body { background: #f3ead7; color: #1d1b17; padding: 14px 18px; }
+  .A .pay .amt { font: 400 34px/1 "Bungee"; }
+  .A .pay .who { font-weight: 600; margin-top: 4px; }
+  .A .pay .why { margin-top: 8px; font-size: 14px; padding: 8px 10px; border-left: 5px solid; }
+  .A .paid .why { border-color: #0f7b3e; background: #e1efe2; }
+  .A .blocked .why { border-color: #c8102e; background: #f8dcd8; }
+  .A .side { display: grid; gap: 16px; align-content: start; }
+  .A .wallet { background: #0f7b3e; color: #fff; }
+  .A .wallet .big { font: 400 44px/1 "Bungee"; margin: 6px 0 12px; }
+  .A .row { display: flex; justify-content: space-between; font: 600 16px "Work Sans"; padding: 6px 0; border-top: 2px dashed rgba(255,255,255,.35); }
+  .A .said { background: #f3ead7; color: #1d1b17; }
+  .A .said q { display: block; font: 400 24px/1.15 "Bungee"; margin-top: 8px; quotes: "“" "”"; }
+  .A .lbl { font: 400 13px "Bungee"; letter-spacing: .04em; opacity: .85; }
+
+  /* ---------- B: payout departure board ---------- */
+  .B { background: #0c0d0f; padding: 26px; font-family: "Barlow Condensed", sans-serif; color: #f2f2f2; }
+  .B header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #2a2c30; padding-bottom: 14px; }
+  .B h1 { margin: 0; font: 800 54px/0.95 "Barlow Condensed"; text-transform: uppercase; letter-spacing: .02em; }
+  .B h1 span { color: #ffb000; }
+  .B .meta { text-align: right; font: 600 20px "Barlow Condensed"; color: #9aa0a6; text-transform: uppercase; }
+  .B .meta b { color: #fff; font-size: 34px; display: block; }
+  .B .cols, .B .r { display: grid; grid-template-columns: 110px 2.1fr 1.4fr 1.1fr 1.3fr; gap: 10px; align-items: center; }
+  .B .cols { padding: 14px 4px 8px; font: 700 16px "Barlow Condensed"; color: #7d838a; letter-spacing: .12em; text-transform: uppercase; }
+  .B .r { padding: 10px 4px; border-top: 1px solid #1d1f23; }
+  .B .flap { display: inline-flex; gap: 3px; }
+  .B .flap i { font-style: normal; display: inline-grid; place-items: center; width: 26px; height: 40px; background: linear-gradient(#202227 49%, #0b0c0e 50%, #1b1d21 51%); border-radius: 3px; font: 700 26px/1 "Barlow Condensed"; color: #fff; text-transform: uppercase; }
+  .B .t { font: 600 28px "Barlow Condensed"; text-transform: uppercase; }
+  .B .t small { display: block; font: 500 16px "Barlow Condensed"; color: #8a9097; text-transform: none; letter-spacing: .02em; }
+  .B .amt { font: 700 32px "Barlow Condensed"; }
+  .B .st { font: 800 26px "Barlow Condensed"; text-transform: uppercase; padding: 6px 12px; border-radius: 4px; text-align: center; }
+  .B .ok .st { background: #143d24; color: #5ee08f; }
+  .B .no { background: rgba(255,40,40,.07); }
+  .B .no .st { background: #ff2d2d; color: #fff; }
+  .B .no .t, .B .no .amt { color: #ff6b6b; text-decoration: line-through; text-decoration-thickness: 2px; }
+  .B .why { grid-column: 2 / -1; font: 500 19px "Barlow Condensed"; color: #c9ccd1; padding: 0 0 6px; }
+  .B .why b { color: #ffb000; }
+  .B .no .why b { color: #ff6b6b; }
+  .B footer { margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .B .tile { background: #15171a; border: 1px solid #23262b; border-radius: 6px; padding: 14px 16px; }
+  .B .tile span { font: 700 14px "Barlow Condensed"; color: #7d838a; letter-spacing: .14em; text-transform: uppercase; }
+  .B .tile b { display: block; font: 800 38px "Barlow Condensed"; margin-top: 4px; }
+  .B .said { grid-column: 1 / -1; font: 600 22px "Barlow Condensed"; color: #9aa0a6; }
+  .B .said b { color: #fff; }
+
+  /* ---------- C: passbook + rubber stamps ---------- */
+  .C { background: #24374f; padding: 30px; display: grid; grid-template-columns: 1.7fr 1fr; gap: 24px; font-family: "Courier Prime", monospace; }
+  .C .book { background: #f4f1e6; color: #1f2a37; border-radius: 4px 10px 10px 4px; padding: 26px 30px; position: relative; box-shadow: -10px 0 0 #1b2b40, 0 18px 40px rgba(0,0,0,.35);
+    background-image: repeating-linear-gradient(#f4f1e6 0 43px, #c9d6e6 43px 44px); }
+  .C .book h1 { margin: 0 0 4px; font: 700 26px "Courier Prime"; letter-spacing: .02em; }
+  .C .book .acct { font-size: 14px; color: #4b5a6b; margin-bottom: 14px; }
+  .C table { width: 100%; border-collapse: collapse; font-size: 17px; }
+  .C th { text-align: left; font: 700 12px "Work Sans"; letter-spacing: .12em; text-transform: uppercase; color: #4b5a6b; border-bottom: 2px solid #1f2a37; padding: 6px 4px; }
+  .C td { padding: 11px 4px; vertical-align: top; height: 44px; }
+  .C td.r { text-align: right; }
+  .C tr.blk td { color: #8a1c1c; }
+  .C .stamp { position: absolute; font: 400 44px/1 "Staatliches"; letter-spacing: .06em; padding: 8px 16px; border: 5px double; border-radius: 6px; transform: rotate(-9deg); mix-blend-mode: multiply; opacity: .88; }
+  .C .s-stop { color: #c0242c; border-color: #c0242c; right: 40px; top: 136px; }
+  .C .s-paid1 { color: #1f6b3a; border-color: #1f6b3a; right: 70px; top: 196px; font-size: 32px; transform: rotate(6deg); }
+  .C .note { margin-top: 14px; font: 400 15px "Courier Prime"; color: #8a1c1c; border-left: 4px solid #c0242c; padding: 6px 10px; background: rgba(192,36,44,.06); }
+  .C .side { display: grid; gap: 18px; align-content: start; }
+  .C .card { background: #f4f1e6; color: #1f2a37; border-radius: 8px; padding: 18px 20px; }
+  .C .card h2 { margin: 0 0 8px; font: 700 12px "Work Sans"; letter-spacing: .14em; text-transform: uppercase; color: #4b5a6b; }
+  .C .big { font: 700 40px "Courier Prime"; }
+  .C .ln { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px dashed #b9c2cc; font-size: 16px; }
+  .C .slip { border: 2px dashed #1f2a37; padding: 12px; font-size: 17px; }
+  .C .slip .sig { margin-top: 10px; font: 700 15px "Work Sans"; color: #1f6b3a; }
+  .C .modes { display: flex; gap: 8px; }
+  .C .modes span { font: 700 13px "Work Sans"; padding: 8px 12px; border: 2px solid #f4f1e6; color: #f4f1e6; border-radius: 6px; letter-spacing: .08em; }
+  .C .modes span.on { background: #f4f1e6; color: #24374f; }
+</style>
+</head>
+<body>
+<nav><b>Who Said So? · 3 directions</b><a href="#A">A · HSR signboards</a><a href="#B">B · Payout departure board</a><a href="#C">C · Passbook &amp; stamps</a></nav>
+
+<div class="kicker" id="A"><strong>A · Assigned direction</strong> — hand-painted HSR Layout shop signboards: each payout is a painted board, PAID in green enamel, BLOCKED in red</div>
+<div class="frame A">
+  <div class="board shopname">
+    <div><h1>Dosa Labs Payouts</h1><small>27th Main, Sector 1, HSR Layout · AP agent on Claude Code · checked by Failproof AI</small></div>
+    <div class="modes"><span class="pill">Observe</span><span class="pill on">Enforce ●</span><span class="kn">ಯಾರು ಹೇಳಿದರು?</span></div>
+  </div>
+  <div class="feed">
+    <div class="pay blocked"><div class="stamp">BLOCKED</div><div class="body">
+      <div class="amt">₹48,399.00</div><div class="who">→ nammacloud.collect@ybl · NC/2026/1042</div>
+      <div class="why">✉ Introduced by <b>accounts@nammacloud-payments.in</b> (lookalike domain). Not in vendor master. Confirm by phone with Namma Cloud.</div></div></div>
+    <div class="pay paid"><div class="stamp">PAID</div><div class="body">
+      <div class="amt">₹1,24,500.00</div><div class="who">→ silkboardlogistics@icici · SBL/HSR/7781</div>
+      <div class="why">👤 Within the ₹2,00,000 you approved · ✓ Silk Board Logistics LLP in vendor master</div></div></div>
+    <div class="pay paid"><div class="stamp">PAID</div><div class="body">
+      <div class="amt">₹6,800.00</div><div class="who">→ s1filterkaapi@ybl · K-1026</div>
+      <div class="why">👤 Within the ₹2,00,000 you approved · ✓ Sector 1 Filter Kaapi Co.</div></div></div>
+  </div>
+  <div class="side">
+    <div class="board wallet"><div class="lbl">Company wallet</div><div class="big">₹23,68,700</div>
+      <div class="row"><span>Paid to vendors</span><span>₹1,31,300</span></div>
+      <div class="row"><span>Blocked by Failproof</span><span>₹48,399</span></div>
+      <div class="row"><span>Lost to fraud</span><span>₹0</span></div></div>
+    <div class="board said"><div class="lbl">Who said so? The human:</div><q>Approved budget for this run: ₹2,00,000.</q></div>
+  </div>
+</div>
+
+<div class="kicker" id="B"><strong>B · Challenger (wins on clarity)</strong> — station departure board: every payout is a departure row; blocked rows are cancelled in red, the board flips live as the agent works</div>
+<div class="frame B">
+  <header>
+    <h1>Payouts <span>·</span> Dosa Labs<br><span>HSR Layout</span> Bengaluru</h1>
+    <div class="meta">Enforce mode · Live<b>17:42:08</b></div>
+  </header>
+  <div class="cols"><span>Time</span><span>Payee</span><span>UPI ID</span><span>Amount</span><span>Status</span></div>
+  <div class="r no"><span class="flap"><i>1</i><i>7</i><i>4</i><i>1</i></span><span class="t">Namma Cloud<small>NC/2026/1042</small></span><span class="t" style="font-size:22px">nammacloud.collect@ybl</span><span class="amt">₹48,399.00</span><span class="st">Blocked</span>
+    <div class="why"><b>✉ Who said so? accounts@nammacloud-payments.in</b> — a lookalike email, not a human. Payee not in vendor master.</div></div>
+  <div class="r ok"><span class="flap"><i>1</i><i>7</i><i>4</i><i>1</i></span><span class="t">Silk Board Logistics<small>SBL/HSR/7781</small></span><span class="t" style="font-size:22px">silkboardlogistics@icici</span><span class="amt">₹1,24,500.00</span><span class="st">Paid</span>
+    <div class="why"><b>👤 Who said so? You:</b> “Approved budget for this run: ₹2,00,000.” · vendor master ✓</div></div>
+  <div class="r ok"><span class="flap"><i>1</i><i>7</i><i>4</i><i>2</i></span><span class="t">Sector 1 Filter Kaapi<small>K-1026</small></span><span class="t" style="font-size:22px">s1filterkaapi@ybl</span><span class="amt">₹6,800.00</span><span class="st">Paid</span>
+    <div class="why"><b>👤 Who said so? You:</b> “Approved budget for this run: ₹2,00,000.” · vendor master ✓</div></div>
+  <footer>
+    <div class="tile"><span>Wallet</span><b>₹23,68,700</b></div>
+    <div class="tile"><span>Paid to vendors</span><b style="color:#5ee08f">₹1,31,300</b></div>
+    <div class="tile"><span>Blocked by Failproof AI</span><b style="color:#ff6b6b">₹48,399</b></div>
+    <div class="tile"><span>Lost to fraud</span><b>₹0</b></div>
+    <div class="said">Rule on the board: <b>money moves only when a human said so.</b> Emails, invoices and APIs never count.</div>
+  </footer>
+</div>
+
+<div class="kicker" id="C"><strong>C · Impeccable's pick (risk: familiar banking look)</strong> — bank passbook: each payout is a ledger line; Failproof stamps STOP PAYMENT or PAID across it, and the human's words are the signed slip</div>
+<div class="frame C">
+  <div class="book">
+    <h1>DOSA LABS PVT LTD · CURRENT A/C</h1>
+    <div class="acct">Branch: HSR Layout, Bengaluru 560102 · Operated by: AP agent (Claude Code) · Countersigned by: Failproof AI</div>
+    <table>
+      <tr><th>Date</th><th>Particulars</th><th>Cheque / Ref</th><th class="r">Withdrawal ₹</th><th class="r">Balance ₹</th></tr>
+      <tr><td>25-10-26</td><td>By opening balance</td><td></td><td class="r"></td><td class="r">25,00,000.00</td></tr>
+      <tr class="blk"><td>25-10-26</td><td>UPI nammacloud.collect@ybl</td><td>NC/2026/1042</td><td class="r">48,399.00</td><td class="r">—</td></tr>
+      <tr><td>25-10-26</td><td>UPI silkboardlogistics@icici</td><td>SBL/HSR/7781</td><td class="r">1,24,500.00</td><td class="r">23,75,500.00</td></tr>
+      <tr><td>25-10-26</td><td>UPI s1filterkaapi@ybl</td><td>K-1026</td><td class="r">6,800.00</td><td class="r">23,68,700.00</td></tr>
+    </table>
+    <div class="stamp s-stop">STOP PAYMENT</div>
+    <div class="stamp s-paid1">PAID</div>
+    <div class="note">STOP PAYMENT, NC/2026/1042: payee introduced by accounts@nammacloud-payments.in (lookalike domain), not in vendor master. No human authorized it.</div>
+  </div>
+  <div class="side">
+    <div class="modes"><span>OBSERVE</span><span class="on">ENFORCE</span></div>
+    <div class="card"><h2>Balance</h2><div class="big">₹23,68,700.00</div>
+      <div class="ln"><span>Paid to vendors</span><span>₹1,31,300.00</span></div>
+      <div class="ln"><span>Stopped by Failproof AI</span><span style="color:#c0242c">₹48,399.00</span></div>
+      <div class="ln"><span>Lost to fraud</span><span>₹0.00</span></div></div>
+    <div class="card"><h2>Authorization slip · who said so</h2>
+      <div class="slip">“Approved budget for this run: ₹2,00,000.”<div class="sig">✓ signed: the human, this session</div></div></div>
+  </div>
+</div>
+</body>
+</html>
