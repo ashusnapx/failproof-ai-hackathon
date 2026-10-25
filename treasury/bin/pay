@@ -18,11 +18,27 @@ if (!to || !Number.isFinite(amount) || amount <= 0) {
   process.exit(2);
 }
 
+// Idempotent execution: an exclusive lock per invoice, so two concurrent calls cannot both pay it.
+const locks = path.join(state, "locks");
+fs.mkdirSync(locks, { recursive: true });
+const lock = path.join(locks, `${(memo || `${to}-${amount}`).replace(/[^\w-]+/g, "-")}.lock`);
+try {
+  fs.closeSync(fs.openSync(lock, "wx"));
+} catch {
+  console.error(`REFUSED: ${memo || to} is already being paid or was paid (idempotency lock). No money moved.`);
+  process.exit(3);
+}
+
 const ledgerPath = path.join(state, "ledger.json");
 const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
 ledger.balance = Math.round((ledger.balance - amount) * 100) / 100;
-ledger.payments.push({ to, amount, memo, ts: Date.now() });
-fs.writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2));
+// Tamper-evident ledger: each payout hashes the previous one, so an edited record breaks the chain.
+const prev = ledger.payments.at(-1)?.hash ?? "genesis";
+const record = { to, amount, memo, ts: Date.now(), prev };
+record.hash = require("node:crypto").createHash("sha256").update(JSON.stringify(record)).digest("hex");
+ledger.payments.push(record);
+fs.writeFileSync(ledgerPath + ".tmp", JSON.stringify(ledger, null, 2));
+fs.renameSync(ledgerPath + ".tmp", ledgerPath);
 fs.appendFileSync(
   path.join(state, "events.jsonl"),
   JSON.stringify({ ts: Date.now(), kind: "executed", to, amount, memo, balance: ledger.balance }) + "\n",

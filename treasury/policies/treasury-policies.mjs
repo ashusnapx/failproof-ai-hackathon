@@ -1,7 +1,7 @@
 // "Who said so?" — an AI agent may only move money a human authorized in words.
 // Text that reached the agent through a tool (emails, invoices, APIs) never counts as authorization.
 import { customPolicies, allow, deny } from "failproofai";
-import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const PAY = /(?:^|[\s/])bin\/pay\b/;
@@ -79,6 +79,8 @@ function humanBudget(words) {
   return found;
 }
 
+const paidTo = (dir, upi) => readJson(join(dir, "state", "ledger.json"), { payments: [] }).payments.filter((p) => p.to === upi).reduce((t, p) => t + p.amount, 0);
+
 // Closest approved payee by edit distance on the part before @: names what a lookalike imitates.
 function lookalike(vendors, upi) {
   const d = (a, b) => {
@@ -124,7 +126,19 @@ function decide(dir, policy, pay, verdict, hard = false) {
   } catch {
     // shortcut: the UI log is best-effort; the verdict below still applies.
   }
+  if (decision === "deny" && policy !== "treasury-kill-switch") autoFreeze(dir);
   return decision === "deny" ? deny(`Blocked by Failproof AI (${policy}): ${verdict.reason}`) : null;
+}
+
+// Incident containment: 3 denied payouts in one run freeze every payout until a human unfreezes.
+function autoFreeze(dir) {
+  try {
+    const lines = readFileSync(join(dir, "state", "events.jsonl"), "utf8").split("\n").filter(Boolean);
+    const denies = new Set(lines.map((l) => JSON.parse(l)).filter((e) => e.kind === "verdict" && e.decision === "deny").map((e) => `${e.to}|${e.amount}`));
+    if (denies.size >= 3) writeFileSync(join(dir, "state", "freeze.json"), JSON.stringify({ frozen: true, by: "auto: 3 denied payouts in one run", ts: Date.now() }));
+  } catch {
+    // shortcut: containment is best-effort; each deny above still applies.
+  }
 }
 
 customPolicies.add({
@@ -221,13 +235,46 @@ customPolicies.add({
     const vendors = readJson(join(dir, "vendors.json"), { vendors: [] }).vendors;
     for (const pay of pays) {
       const v = vendors.find((x) => x.upi === pay.to);
-      if (!v?.typical || pay.amount <= v.typical * 1.5) continue;
+      if (!v?.typical) continue;
+      const before = paidTo(dir, pay.to);
+      if (before + pay.amount <= v.typical * 1.5) continue;
+      const split = pay.amount <= v.typical * 1.5;
       const verdict = {
         ok: false,
-        reason: `${inr(pay.amount)} is ${(pay.amount / v.typical).toFixed(1)}x what ${v.name} usually bills (${inr(v.typical)}). Check units (paise vs rupees) and get a human to approve.`,
+        reason: split
+          ? `Split payment: ${inr(before)} already paid to ${v.name} this run, plus ${inr(pay.amount)} is ${((before + pay.amount) / v.typical).toFixed(1)}x its usual bill (${inr(v.typical)}). Get a human to approve.`
+          : `${inr(pay.amount)} is ${(pay.amount / v.typical).toFixed(1)}x what ${v.name} usually bills (${inr(v.typical)}). Check units (paise vs rupees) and get a human to approve.`,
         provenance: { by: "vendor-master", text: `${v.name} typical ${inr(v.typical)}` },
       };
       const blocked = decide(dir, "treasury-vendor-spend-anomaly", pay, verdict);
+      if (blocked) return blocked;
+    }
+    return allow();
+  },
+});
+
+customPolicies.add({
+  name: "treasury-velocity-limit",
+  description: "At most 2 payouts per payee and 10 per run; a runaway agent cannot drain the wallet in small steps",
+  category: "Payments",
+  defaultEnabled: true,
+  match: { events: ["PreToolUse"] },
+  fn: async (ctx) => {
+    if (ctx.toolName !== "Bash") return allow();
+    const dir = treasuryDir(ctx);
+    const pays = payments(String(ctx.toolInput?.command ?? ""));
+    if (!dir || pays.length === 0) return allow();
+    const paid = readJson(join(dir, "state", "ledger.json"), { payments: [] }).payments;
+    let total = paid.length;
+    for (const pay of pays) {
+      const toPayee = paid.filter((p) => p.to === pay.to).length;
+      if (toPayee < 2 && total < 10) { total++; continue; }
+      const verdict = {
+        ok: false,
+        reason: toPayee >= 2 ? `${pay.to} already received ${toPayee} payouts this run (limit 2).` : `${total} payouts this run (limit 10).`,
+        provenance: { by: "ledger", text: "velocity limit" },
+      };
+      const blocked = decide(dir, "treasury-velocity-limit", pay, verdict);
       if (blocked) return blocked;
     }
     return allow();

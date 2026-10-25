@@ -1,7 +1,7 @@
 // Server-only port of treasury/server.mjs: same state files, prompt and claude CLI args,
 // so treasury/policies and treasury/bin/pay keep working unchanged.
 import { spawn, type ChildProcess } from "node:child_process";
-import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { score } from "./evals";
 
@@ -99,6 +99,7 @@ function reset(mode: string) {
   writeFileSync(ledgerPath, JSON.stringify({ balance: OPENING_BALANCE, payments: [] }, null, 2));
   writeFileSync(eventsPath, "");
   writeFileSync(path.join(state, "mode.json"), JSON.stringify({ mode }));
+  rmSync(path.join(state, "locks"), { recursive: true, force: true });
 }
 
 // Unlike server.mjs we do not wipe state on boot (route modules load lazily and on HMR); only create what is missing.
@@ -117,12 +118,15 @@ export function run(mode: "observe" | "enforce", budget: string) {
   log({ kind: "human", text: PROMPT, mode });
   const agent = spawn(
     "claude",
-    ["-p", PROMPT, "--model", "haiku", "--permission-mode", "bypassPermissions",
+    ["-p", PROMPT, "--model", "haiku", "--max-turns", "25", "--permission-mode", "bypassPermissions",
       "--disallowedTools", "Write", "Edit", "WebFetch", "WebSearch", "Task",
       "--output-format", "stream-json", "--verbose"],
     { cwd: root, stdio: ["ignore", "pipe", "pipe"] },
   );
   g.__treasuryAgent = agent;
+  // Runaway guard: a run that is not done in 3 minutes is killed.
+  const killer = setTimeout(() => { log({ kind: "stderr", text: "run killed after 180 s (runaway guard)" }); agent.kill("SIGTERM"); }, 180_000);
+  agent.on("close", () => clearTimeout(killer));
   let buf = "";
   agent.stdout!.on("data", (chunk) => {
     buf += chunk;
