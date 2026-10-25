@@ -1,26 +1,28 @@
-/* /coverage: self-contained, signboard look of /live (uses the :root tokens in globals.css). */
-.cov { min-height: 100vh; background: var(--wall); color: #eee; font: 15px/1.45 var(--font-body), system-ui, sans-serif; }
+/* /coverage: self-contained signboard palette (literal colours, independent of the landing tokens). */
+.cov { min-height: 100vh; background: #1d1b17; color: #eee; font: 15px/1.45 var(--font-body), system-ui, sans-serif; }
 .cov .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 28px 60px; display: grid; gap: 36px; }
-.cov .covhead { display: grid; gap: 14px; background: var(--sign); color: var(--ink); border-radius: 8px; padding: 24px 28px; box-shadow: inset 0 0 0 5px rgba(0,0,0,.16), 0 8px 0 rgba(0,0,0,.35); }
-.cov .back { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-weight: 700; }
+.cov .covhead { display: grid; gap: 14px; background: #f6c700; color: #1a1a1a; border-radius: 8px; padding: 24px 28px; box-shadow: inset 0 0 0 5px rgba(0,0,0,.16), 0 8px 0 rgba(0,0,0,.35); }
+.cov .back { display: inline-flex; align-items: center; gap: 6px; color: #1a1a1a; text-decoration: none; font-weight: 700; }
 .cov .covtitle { display: flex; align-items: center; gap: 16px; }
 .cov h1 { margin: 0; font: 400 52px/1 var(--font-board); }
-.cov h2 { margin: 0 0 14px; font: 400 30px/1.1 var(--font-board); color: var(--sign); }
+.cov h2 { margin: 0 0 14px; font: 400 30px/1.1 var(--font-board); color: #f6c700; }
 .cov .tally { display: flex; flex-wrap: wrap; gap: 8px; }
 .cov .chip { display: inline-block; font: 400 13px var(--font-board); font-style: normal; padding: 6px 10px; border-radius: 4px; white-space: nowrap; }
-.cov .chip.live { background: var(--enamel); color: #fff; }
+.cov .chip.live { background: #0f7b3e; color: #fff; }
 .cov .chip.eval { background: #1e4fa3; color: #fff; }
-.cov .chip.platform { background: var(--ink); color: var(--sign); }
+.cov .chip.platform { background: #1a1a1a; color: #f6c700; }
 .cov .chip.next { background: #3a352c; color: #eee; }
 .cov .chip.na { background: transparent; color: #8a8170; border: 1px solid #8a8170; }
 .cov .covhead .chip.next { background: #6b5c00; color: #fff; }
 .cov .covhead .chip.na { color: #3b3200; border-color: #3b3200; }
 .cov .table { border-radius: 6px; overflow: hidden; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
-.cov .tr { display: grid; grid-template-columns: 1.1fr 1.5fr 2fr 150px; gap: 16px; align-items: start; padding: 13px 18px; background: var(--cream); color: var(--cream-ink); border-top: 1px solid #d8ccb0; font-size: 15px; }
+.cov .tr { display: grid; grid-template-columns: 1.1fr 1.5fr 2fr 150px; gap: 16px; align-items: start; padding: 13px 18px; background: #f3ead7; color: #1d1b17; border-top: 1px solid #d8ccb0; font-size: 15px; }
 .cov .tr span { display: grid; gap: 2px; }
 .cov .tr small { color: #6b604d; font: 600 12px var(--font-data); }
-.cov .tr.th { background: var(--ink); color: var(--sign); font: 400 14px var(--font-board); border: 0; }
-.cov .caption { margin: 0; color: var(--muted); font-size: 14px; }
+.cov .tr.th { background: #1a1a1a; color: #f6c700; font: 400 14px var(--font-board); border: 0; }
+.cov .caption { margin: 0; color: #b3a993; font-size: 14px; }
 @media (max-width: 900px) { .cov .tr { grid-template-columns: 1fr; } }
-.cov .covhead h1 { color: var(--ink); }
-.cov .caption a { color: var(--sign); }
+.cov .covhead h1 { color: #1a1a1a; }
+.cov .caption a { color: #f6c700; }
+.cov .tr b { color: #1d1b17; }
+.cov .tr.th span { color: #f6c700; }

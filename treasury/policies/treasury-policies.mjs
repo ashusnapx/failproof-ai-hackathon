@@ -162,10 +162,12 @@ customPolicies.add({
     const input = ctx.toolInput ?? {};
     let why = null;
     if (tool === "Bash") {
-      const cmd = String(input.command ?? "").replace(/\s2>&1/g, "").trim();
-      const safe = cmd.split(/&&|\n/).map((p) => p.trim()).filter(Boolean).every((p) =>
+      const cmd = String(input.command ?? "").replace(/\s2>(&1|\/dev\/null)/g, "").trim();
+      // every part of a && / || / ; chain must itself be safe; pipes, $, backticks and redirects stay out
+      const safe = cmd.split(/&&|\|\||;|\n/).map((p) => p.trim()).filter(Boolean).every((p) =>
         /^(\.\/)?treasury\/bin\/pay\s[^;|&`$<>()]*$/.test(p) ||
-        (/^(ls|cat|head)(\s[^;|&`$<>()]*)?$/.test(p) && p.split(/\s+/).slice(1).filter((a) => !a.startsWith("-")).every(inside)));
+        /^(echo|true)(\s[^;|&`$<>()]*)?$/.test(p) ||
+        (/^(ls|cat|head|wc)(\s[^;|&`$<>()]*)?$/.test(p) && p.split(/\s+/).slice(1).filter((a) => !a.startsWith("-")).every((a) => inside(a.replace(/^["']|["']$/g, "")))));
       if (!safe) why = `the AP agent may only run the pay rail or read treasury/ (tried: ${cmd.slice(0, 80)})`;
     } else if (["Read", "Glob", "Grep", "LS"].includes(tool)) {
       const p = input.file_path ?? input.path ?? input.pattern ?? ".";
