@@ -31,6 +31,9 @@ Built at **Hacktober Hack**, organised by **Failproof AI × Quad AI** · HSR Lay
 ## Table of contents
 
 - [Why TruePe](#why-truepe)
+- [Who it's for](#who-its-for)
+- [Our thought process](#our-thought-process)
+- [How TruePe compares](#how-truepe-compares)
 - [Demo results](#demo-results)
 - [How it works](#how-it-works)
 - [TruePe AI](#truepe-ai)
@@ -60,6 +63,46 @@ TruePe answers one question for every rupee: **who said so?**
 - **Every decision carries provenance.** Allowed payouts quote the human sentence that permitted them. Blocked payouts name the email that introduced the payee.
 
 The demo company, vendors and payments are fictional. Payments go to a mock UPI rail; no real money moves.
+
+## Who it's for
+
+TruePe is meant for teams that want an AI agent to run **accounts payable**: read the vendor bills that arrive by email and API, and pay them over UPI, without handing it the power to pay whoever an email names.
+
+- **Finance and operations leads at Indian startups** who want invoices paid on time without a person keying every payout, and need to answer “who approved this?” for every rupee.
+- **Developers building payment agents** who need a guardrail that sits inside the agent, in front of any payment rail, and that they can add in minutes as plain policy files.
+- **Security teams** who need to show that untrusted input (emails, PDFs, vendor APIs) can inform an agent but can never authorize it to move money.
+
+## Our thought process
+
+Two kinds of incident shaped TruePe: an agent that sent 52.4M tokens instead of 52,439 (a unit error, reported February 2026), and a prompt injection that moved about $155K through Grok and Bankrbot (reported May 2026). Neither needed a cleverer model to prevent. Each needed someone to check, at the moment of payment, **who said so**. That led to six principles:
+
+1. **Authorization comes from words, not data.** A budget counts only if a human typed it. Amounts the agent reads in an invoice, email or API response inform it; they never authorize it.
+2. **The inbox is attacker-controlled.** Every email and vendor payload is untrusted tool output. A “UPI ID changed” email can name a new payee; it cannot make that payee payable. Only the vendor master can.
+3. **Check at the tool call, before the rail.** The decision happens at Claude Code's `PreToolUse` hook, so it works in front of any payment rail and a blocked payout never reaches the bank.
+4. **Every rupee carries provenance.** An allowed payout quotes the human sentence that permitted it; a blocked one names the email that tried to introduce the payee. The reason is the product, not a log line.
+5. **Observe first, then enforce.** Teams can watch what TruePe *would* block on real runs before it denies anything, then switch to Enforce once they trust it.
+6. **Humans own the guardrails.** The agent can propose a new payee, budget or rule, but only a person's click applies it, and Failproof AI's tamper guard stops agents from editing the policies.
+
+## How TruePe compares
+
+We read each product's own public page on 25 Oct 2026. These are their marketing claims, not audits.
+
+| Product | What it is | What it does well | What TruePe adds |
+| --- | --- | --- | --- |
+| Razorpay Agentic Payments | Indian gateway, UPI Reserve Pay | Consent-based, pre-authorized UPI payments within approved limits; MCP and APIs | Vendor payouts too, with every payee traced to who introduced it, so a fake “UPI changed” email cannot add one |
+| Stripe Shared Payment Tokens | Payment rail and agent toolkit | Tokens with a maximum amount, currency and expiry; revocable at any time | Checks *who* asked: the budget comes from the human's own words, not only a number on a token |
+| Crossmint | Agent wallets and cards | Spending caps, approval above thresholds, merchant allowlists, audit logs | Works at the agent's tool call across harnesses, on UPI, and treats inbox text as untrusted |
+| Visa Intelligent Commerce | Card-network agent framework | Consumer-set limits and conditions; tokenized credentials | B2B and accounts-payable payouts, not only card checkout |
+| Payman | Agent platform for banks | Immutable policy engine, approvals, kill switch, full audit trail | A developer adds it to any agent in minutes; no core-banking project |
+| Lakera Guard | General AI runtime security | Prompt-attack prevention; granular policies without code changes | Understands money: payees, budgets, paise versus rupees, provenance for every rupee |
+| Skyfire / Natural | Agent identity and checkout | Mandates binding merchant, product and amount; verifiable agent identity | Proves the human approved *this payee*, not only who the agent is |
+
+**What none of them offer today**, on the pages we read:
+
+- **Every rupee traces to a human sentence.** Others rely on static caps or allowlists; TruePe reads the human's words, and emails, invoices and APIs never authorize.
+- **Inside the agent, before any rail.** Enforced at the tool call in Claude Code and the other harnesses Failproof AI supports, so it protects whichever payment rail sits behind it.
+- **UPI-native, built for Indian accounts payable.** Vendor payouts, lakh formatting, Karnataka GSTINs, and paise-versus-rupees mistakes capped by the human's budget.
+- **Observe first, then enforce.** See exactly what would be blocked on real runs before anything is denied.
 
 ## Demo results
 
