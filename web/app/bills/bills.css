@@ -36,3 +36,8 @@
 .bills.embedded .stamp { font-size: 13px; padding: 8px; }
 .bills.embedded .body { padding: 8px 10px; font-size: 13px; }
 .bills.embedded .amt { font-size: 17px; padding: 0 10px; }
+.tabs .panel .bills.embedded .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tabs .panel .bills.embedded .acts button { width: auto; height: auto; min-height: 34px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 6px; font: 600 13px var(--font-body), system-ui, sans-serif; background: #1a1a1a; color: #fff; }
+.tabs .panel .bills.embedded .acts button.gm { background: #0f7b3e; }
+.tabs .panel .bills.embedded .acts button.pay { background: #c8102e; }
+.tabs .panel .bills.embedded .sum { display: flex; flex-wrap: wrap; gap: 4px 12px; }
