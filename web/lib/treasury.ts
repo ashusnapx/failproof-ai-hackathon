@@ -61,9 +61,18 @@ export function deleteVendor(upi: string | null) {
 // Kill switch: treasury-kill-switch denies every payout while state/freeze.json says frozen.
 const freezePath = path.join(state, "freeze.json");
 export const isFrozen = () => existsSync(freezePath) && JSON.parse(readFileSync(freezePath, "utf8")).frozen === true;
+// "human" when pressed in the UI; treasury-payee policies write "auto: …" when they contain an incident.
+export const frozenBy = () => (isFrozen() ? JSON.parse(readFileSync(freezePath, "utf8")).by ?? "human" : null);
 export function setFrozen(frozen: boolean) {
   mkdirSync(state, { recursive: true });
   writeFileSync(freezePath, JSON.stringify({ frozen, ts: Date.now() }));
+}
+
+// The policies Failproof AI enforces here; the convention copy under .failproofai/ is the one the hooks load.
+export function listPolicies(): { name: string; description: string }[] {
+  const file = [path.join(root, ".failproofai", "policies", "treasury-policies.mjs"), path.join(dir, "policies", "treasury-policies.mjs")].find((f) => existsSync(f));
+  if (!file) return [];
+  return [...readFileSync(file, "utf8").matchAll(/name:\s*"([^"]+)",\s*description:\s*"([^"]+)"/g)].map((m) => ({ name: m[1], description: m[2] }));
 }
 
 export function listInbox(): Email[] {

@@ -1,0 +1,28 @@
+/* /bills: one place for every bill TruePe pulled from mail (literal signboard colours). */
+.bills { min-height: 100vh; background: #1d1b17; color: #eee; font: 15px/1.45 var(--font-body), system-ui, sans-serif; }
+.bills .wrap { max-width: 1200px; margin: 0 auto; padding: 28px; display: grid; gap: 22px; }
+.bills .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; background: #f6c700; color: #1a1a1a; border-radius: 8px; padding: 20px 24px; box-shadow: inset 0 0 0 5px rgba(0,0,0,.16), 0 8px 0 rgba(0,0,0,.35); }
+.bills h1 { margin: 0; font: 400 40px/1 var(--font-board); color: #1a1a1a; }
+.bills .head a { color: #1a1a1a; font-weight: 700; }
+.bills .acts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.bills button, .bills .budget { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 5px; padding: 11px 16px; font: 400 15px var(--font-board); cursor: pointer; background: #1a1a1a; color: #f6c700; }
+.bills button.pay { background: #c8102e; color: #fff; }
+.bills button.gm { background: #0f7b3e; color: #fff; }
+.bills button:disabled { opacity: .55; cursor: wait; }
+.bills .budget { background: #fff8d6; color: #1a1a1a; cursor: text; }
+.bills .budget input { width: 120px; border: 0; background: transparent; font: 400 17px var(--font-board); color: #1a1a1a; outline: none; }
+.bills .msg { color: #b3a993; font-weight: 600; }
+.bills .msg.err { color: #ff8a80; }
+.bills .grid { display: grid; gap: 12px; }
+.bills .bill { display: grid; grid-template-columns: 150px 1fr auto; align-items: center; border-radius: 6px; overflow: hidden; background: #f3ead7; color: #1d1b17; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
+.bills .stamp { align-self: stretch; display: grid; place-items: center; font: 400 20px var(--font-board); color: #fff; padding: 12px; text-align: center; }
+.bills .ready .stamp { background: #0f7b3e; }
+.bills .review .stamp { background: #e8a317; color: #1a1500; }
+.bills .suspicious .stamp { background: #c8102e; }
+.bills .body { padding: 12px 16px; display: grid; gap: 3px; }
+.bills .body b { font-size: 16px; }
+.bills .body small { font: 600 13px var(--font-data); color: #5e5546; }
+.bills .amt { padding: 0 18px; font: 400 26px var(--font-board); white-space: nowrap; }
+.bills .tag { display: inline-block; margin-left: 8px; padding: 1px 6px; border-radius: 3px; background: #1a1a1a; color: #f6c700; font: 400 11px var(--font-board); vertical-align: 2px; }
+.bills .sum { display: flex; flex-wrap: wrap; gap: 18px; color: #e6dbc2; font-weight: 600; }
+.bills .sum b { font: 400 20px var(--font-board); color: #f6c700; }

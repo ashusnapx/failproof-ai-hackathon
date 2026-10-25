@@ -2,17 +2,19 @@
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Check, Mail, Pencil, Play, Plus, ShieldCheck, Snowflake, Trash2, User, X } from "lucide-react";
+import { BadgeCheck, Bot, Check, Mail, Pencil, Play, Plus, ShieldCheck, Snowflake, Trash2, TriangleAlert, User, X } from "lucide-react";
 import { Mark } from "../logo";
 import "./live.css";
 
 type Mode = "observe" | "enforce";
+type Decision = "allow" | "deny" | "would-deny";
 type Vendor = { name: string; upi: string; gstin: string; area: string };
-type Provenance = { by: "human" | "vendor-master" | "untrusted"; text: string };
+type Provenance = { by: "human" | "vendor-master" | "untrusted" | "ledger"; text: string };
+type Policy = { name: string; description: string };
 // One SSE event, exactly as written to treasury/state/events.jsonl (plus hello/reset/ledger from the stream).
 type Ev = {
   kind: string; ts?: number; text?: string; mode?: Mode; name?: string; input?: string; error?: boolean;
-  policy?: string; decision?: "allow" | "deny" | "would-deny"; to?: string; amount?: number; memo?: string;
+  policy?: string; decision?: Decision; to?: string; amount?: number; memo?: string;
   reason?: string; provenance?: Provenance; balance?: number; running?: boolean; cost?: number; ms?: number;
   vendors?: { vendors: Vendor[] }; opening?: number;
 };
@@ -22,9 +24,11 @@ type State = {
   totals: { paid: number; saved: number; lost: number; checks: number };
   balance: number; running: boolean; runMode: Mode | null; seq: number;
 };
+type Data = { vendors: Vendor[]; inbox: Email[]; frozen: boolean; frozenBy: string | null; history: Card[]; policies: Policy[] };
 
 const inr = (n: number) => Number(n).toLocaleString("en-IN", { style: "currency", currency: "INR" });
 const inr0 = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
+const short = (policy: string) => policy.replace(/^treasury-/, "");
 const OPENING = 2500000;
 const fresh = (s: Partial<State> = {}): State => ({
   vendors: [], opening: OPENING, items: [], flagged: [], totals: { paid: 0, saved: 0, lost: 0, checks: 0 },
@@ -45,7 +49,7 @@ function reduce(s: State, e: Ev): State {
       const key = `${e.to}|${e.amount}`;
       const t = { ...s.totals, checks: s.totals.checks + 1 };
       const flagged = [...s.flagged];
-      if (e.decision === "deny" && !flagged.includes(key)) { t.saved += e.amount || 0; flagged.push(key); }
+      if (e.decision === "deny" && e.to && !flagged.includes(key)) { t.saved += e.amount || 0; flagged.push(key); }
       if (e.decision === "would-deny") flagged.push("obs|" + key);
       return { ...s, totals: t, flagged, items: push(), seq: s.seq + 1, runMode: e.mode ?? s.runMode };
     }
@@ -64,32 +68,36 @@ function reduce(s: State, e: Ev): State {
   }
 }
 
-// One painted board per payout attempt: every verdict and the execution for the same payee + amount.
+// One slip per payout attempt (every verdict and the execution for the same payee + amount).
+// Verdicts that name no payee (the agent sandbox, a command that only mentions bin/pay) become notes, not payouts.
+type Check = { policy: string; decision: Decision };
 type Payout = {
-  key: string; to: string; amount: number; memo: string;
+  key: string; note?: boolean; to: string; amount: number; memo: string; command?: string;
   status: "checking" | "blocked" | "paid" | "lost";
-  human?: string; vendor?: string; source?: string; reason?: string; policy?: string; checks: number;
+  human?: string; vendor?: string; source?: string; reason?: string; policy?: string; checks: Check[];
 };
 function payouts(items: Item[]): Payout[] {
   const map = new Map<string, Payout>();
+  let command = "";
   for (const { e, lost } of items) {
+    if (e.kind === "tool") command = String(e.input ?? "");
     if (e.kind !== "verdict" && e.kind !== "executed") continue;
-    if (e.policy === "treasury-agent-sandbox") {
-      map.set(`sb${e.ts}`, { key: `sb${e.ts}`, to: "agent sandbox", amount: 0, memo: "", status: "blocked", reason: e.reason, policy: e.policy, checks: 1 });
+    if (e.kind === "verdict" && !e.to) {
+      map.set(`n${e.ts}${e.policy}`, { key: `n${e.ts}${e.policy}`, note: true, to: "", amount: 0, memo: "", status: "blocked", reason: e.reason?.trim(), policy: e.policy, checks: [] });
       continue;
     }
     const key = `${e.to}|${e.amount}`;
-    const p = map.get(key) ?? { key, to: e.to ?? "", amount: e.amount ?? 0, memo: "", status: "checking" as const, checks: 0 };
+    const p = map.get(key) ?? { key, to: e.to ?? "", amount: e.amount ?? 0, memo: "", status: "checking" as const, checks: [] };
     if (e.memo) p.memo = e.memo;
     if (e.kind === "executed") p.status = lost ? "lost" : "paid";
     else {
-      p.checks++;
-      if (e.decision !== "allow" && !p.policy) p.policy = e.policy;
+      if (/bin\/pay/.test(command)) p.command = command;
+      p.checks = [...p.checks.filter((c) => c.policy !== e.policy), { policy: e.policy ?? "", decision: e.decision ?? "allow" }];
       const by = e.provenance?.by;
       if (by === "human") p.human = e.provenance?.text;
       if (by === "vendor-master") p.vendor = e.provenance?.text;
       if (by === "untrusted") p.source = e.provenance?.text.replace(/\s*\(.*\)$/, "");
-      if (e.decision !== "allow") p.reason = e.reason?.split(". ")[0] + ".";
+      if (e.decision !== "allow" && !p.reason) { p.reason = e.reason; p.policy = e.policy; }
       if (e.decision === "deny") p.status = "blocked";
     }
     map.set(key, p);
@@ -124,7 +132,7 @@ function useCount(target: number, ms = 900) {
 function activity(items: Item[], running: boolean): string {
   for (let i = items.length - 1; i >= 0; i--) {
     const e = items[i].e;
-    if (e.kind === "done") return "Done.";
+    if (e.kind === "done") return `Done in ${((e.ms ?? 0) / 1000).toFixed(1)} s · $${(e.cost ?? 0).toFixed(3)}.`;
     if (e.kind === "tool") {
       const input = String(e.input ?? "");
       if (/bin\/pay/.test(input)) return "Paying over UPI…";
@@ -142,7 +150,7 @@ export default function Page() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [budget, setBudget] = useState("2,00,000");
-  const [data, setData] = useState<{ vendors: Vendor[]; inbox: Email[]; frozen: boolean; history: Card[] }>({ vendors: [], inbox: [], frozen: false, history: [] });
+  const [data, setData] = useState<Data>({ vendors: [], inbox: [], frozen: false, frozenBy: null, history: [], policies: [] });
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -150,8 +158,11 @@ export default function Page() {
     es.onmessage = (m) => {
       try {
         const e = JSON.parse(m.data);
-        if (e.kind === "data") setData({ vendors: e.vendors, inbox: e.inbox, frozen: !!e.frozen, history: e.history ?? [] });
-        else dispatch(e);
+        if (e.kind === "data") setData({ vendors: e.vendors, inbox: e.inbox, frozen: !!e.frozen, frozenBy: e.frozenBy ?? null, history: e.history ?? [], policies: e.policies ?? [] });
+        else {
+          if (e.kind === "ledger" && e.running) setStarting(false);
+          dispatch(e);
+        }
       } catch { /* ignore a malformed line */ }
     };
     return () => es.close();
@@ -162,8 +173,6 @@ export default function Page() {
     const f = feedRef.current;
     if (f) f.scrollTop = f.scrollHeight;
   }, [list.length]);
-
-  useEffect(() => { if (s.running) setStarting(false); }, [s.running]);
 
   const busy = s.running || starting;
   async function start() {
@@ -179,60 +188,62 @@ export default function Page() {
   }
 
   const balance = useCount(s.balance);
-  const said = budgetLine([...s.items].reverse().find((i) => i.e.provenance?.by === "human")?.e.provenance?.text);
+  // The budget sentence Failproof read back from the transcript (the kill switch is also "human", but carries no budget).
+  const said = budgetLine([...s.items].reverse().find((i) => i.e.provenance?.by === "human" && /budget|₹/i.test(i.e.provenance.text))?.e.provenance?.text);
   const now = activity(s.items, busy);
+  const done = s.items.some((i) => i.e.kind === "done");
+  const report = done ? s.items.findLast((i) => i.e.kind === "agent")?.e.text : undefined;
+  const auto = data.frozenBy?.startsWith("auto");
 
   return (
     <main className="A">
-      <div className="board shopname">
+      <header className="mast">
         <div className="brand">
-          <Link href="/" aria-label="TruePe home"><Mark size={64} /></Link>
+          <Link href="/" aria-label="TruePe home"><Mark size={46} /></Link>
           <div>
             <h1>TruePe · Dosa Labs</h1>
-            <small>27th Main, Sector 1, HSR Layout · AP agent on Claude Code · enforced by <a className="fp" href="https://befailproof.ai" target="_blank" rel="noreferrer">Failproof AI ↗</a> · <Link className="fp" href="/coverage">Coverage</Link></small>
+            <small>27th Main, Sector 1, HSR Layout · AP agent on Claude Code · enforced by <a href="https://befailproof.ai" target="_blank" rel="noreferrer">Failproof AI ↗</a> · <Link href="/coverage">Coverage</Link></small>
           </div>
         </div>
-        <div className="modes">
-          {(["observe", "enforce"] as const).map((m) => (
-            <button key={m} className={`pill ${mode === m ? "on" : ""}`} onClick={() => setMode(m)} disabled={busy} aria-pressed={mode === m}>
-              {m === "observe" ? "Observe" : "Enforce"}{mode === m ? " ●" : ""}
-            </button>
-          ))}
-          <label className="pill budget" title="Budget the human approves for this run">
-            ₹<input value={budget} onChange={(e) => setBudget(e.target.value.replace(/[^\d,]/g, "").slice(0, 12))} disabled={busy} aria-label="Approved budget in rupees" />
+        <div className="controls">
+          <label className="say" title="Budget the human approves for this run">
+            Approved budget for this run: ₹<input value={budget} onChange={(e) => setBudget(e.target.value.replace(/[^\d,]/g, "").slice(0, 12))} disabled={busy} aria-label="Approved budget in rupees" />
           </label>
-          <button className="pill run" onClick={start} disabled={busy}>
-            <Play size={16} fill="currentColor" />{busy ? "Live" : "Run"}
+          <div className="seg" role="group" aria-label="Mode">
+            {(["observe", "enforce"] as const).map((m) => (
+              <button key={m} onClick={() => setMode(m)} disabled={busy} aria-pressed={mode === m}>{m === "observe" ? "Observe" : "Enforce"}</button>
+            ))}
+          </div>
+          <button className="go" onClick={start} disabled={busy}><Play size={16} fill="currentColor" />{busy ? "Live" : "Run"}</button>
+          <button className={`freeze ${data.frozen ? "on" : ""}`} onClick={() => send("/api/freeze", "POST", { frozen: !data.frozen })}>
+            <Snowflake size={16} />{data.frozen ? "Unfreeze" : "Freeze"}
           </button>
-          <button className={`pill freeze ${data.frozen ? "on" : ""}`} onClick={() => send("/api/freeze", "POST", { frozen: !data.frozen })} aria-pressed={data.frozen}>
-            <Snowflake size={16} />{data.frozen ? "Frozen" : "Freeze"}
-          </button>
-          <span className="kn">ಯಾರು ಹೇಳಿದರು?</span>
         </div>
-      </div>
+      </header>
 
-      <div className="feed" ref={feedRef}>
-        {data.frozen ? <div className="frozen"><Snowflake size={22} /> All payouts frozen by a human</div> : null}
-        <div className={`now ${busy ? "on" : ""}`}>{error || now || "Press Run."}</div>
-        {list.map((p) => <PayBoard key={p.key} p={p} />)}
-      </div>
+      <section className="feed" ref={feedRef}>
+        {data.frozen ? (
+          <div className="frozen"><Snowflake size={22} /> All payouts frozen {auto ? <>by Failproof AI <small>{data.frozenBy?.replace(/^auto:\s*/, "")}</small></> : "by a human"}</div>
+        ) : null}
+        <div className={`now ${busy ? "on" : ""}`}>{error || now || "Type a budget, pick a mode, press Run."}</div>
+        {list.map((p) => (p.note ? <Note key={p.key} p={p} /> : <Slip key={p.key} p={p} />))}
+        {report ? <div className="report"><span className="lbl"><Bot size={14} /> The agent&rsquo;s report to you</span><p>{report.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim()}</p></div> : null}
+      </section>
 
-      <div className="side">
-        <div className="board wallet">
-          <div className="lbl">Company wallet</div>
+      <aside className="side">
+        <div className="card ledger">
+          <span className="lbl">Company wallet</span>
           <div className="big">{inr0(balance)}</div>
-          <div className="row"><span>Paid to vendors</span><span>{inr0(s.totals.paid)}</span></div>
-          <div className="row"><span>Blocked by Failproof</span><span>{inr0(s.totals.saved)}</span></div>
-          <div className={`row ${s.totals.lost ? "lost" : ""}`}><span>Lost to fraud</span><span>{inr0(s.totals.lost)}</span></div>
+          <div className="trio">
+            <span><small>Paid to vendors</small><b>{inr0(s.totals.paid)}</b></span>
+            <span><small>Blocked by Failproof</small><b>{inr0(s.totals.saved)}</b></span>
+            <span className={s.totals.lost ? "bad" : ""}><small>Lost to fraud</small><b>{inr0(s.totals.lost)}</b></span>
+          </div>
+          <p className="said"><User size={14} />{said ? <>Who said so: <q>{said}</q></> : "No human words read yet."}</p>
         </div>
         <Evals card={(s.items.findLast((i) => i.e.kind === "eval")?.e as unknown as Card) ?? null} history={data.history} running={busy} />
-        <div className="board said">
-          <div className="lbl">Who said so? The human:</div>
-          {said ? <q>{said}</q> : <q className="none">Nobody yet.</q>}
-        </div>
-        <Payees vendors={data.vendors} />
-        <Inbox inbox={data.inbox} />
-      </div>
+        <Tabs data={data} items={s.items} />
+      </aside>
     </main>
   );
 }
@@ -249,23 +260,68 @@ function Evals({ card, history, running }: { card: Card | null; history: Card[];
   const c = running ? null : card ?? history.at(-1) ?? null;
   const rows: [string, string, boolean][] = c ? [
     ["Fraud caught", `${c.fraudBlocked}/${c.fraudAttempts}${c.fraudLost ? ` · ${inr0(c.fraudLost)} lost` : ""}`, c.fraudLost === 0],
-    ["Accuracy", `${c.legitPaid}/${c.legit} paid right${c.wrongAmount ? ` · ${c.wrongAmount} wrong amount` : ""}`, c.wrongAmount === 0],
-    ["Hallucinations", c.hallucinations.length ? c.hallucinations.join(", ") : "0", c.hallucinations.length === 0],
+    ["Paid right", `${c.legitPaid}/${c.legit}${c.wrongAmount ? ` · ${c.wrongAmount} wrong` : ""}`, c.wrongAmount === 0],
+    ["Hallucinated", c.hallucinations.length ? c.hallucinations.join(", ") : "0", c.hallucinations.length === 0],
     ["Over-blocks", String(c.overBlocks), c.overBlocks === 0],
     ["Retries after block", String(c.retriesAfterBlock), c.retriesAfterBlock === 0],
     ["Latency · cost", `${(c.ms / 1000).toFixed(1)} s · $${c.cost.toFixed(3)}`, true],
   ] : [];
   return (
-    <div className="board evals">
-      <div className="crud-head">
-        <span className="lbl">Evals · last run</span>
-        {c ? <span className={`verdict ${c.pass ? "ok" : "bad"}`}>{c.pass ? "PASS" : "FAIL"} · {c.mode}</span> : <span className="verdict">{running ? "scoring…" : "no runs"}</span>}
+    <div className="card score">
+      <div className="head">
+        <span className="lbl">Run scorecard</span>
+        {c ? <span className={`verdict ${c.pass ? "ok" : "bad"}`}>{c.pass ? "Pass" : "Fail"} · {c.mode}</span> : <span className="verdict">{running ? "scoring…" : "no runs"}</span>}
       </div>
-      {rows.map(([k, v, ok]) => <div className={`erow ${ok ? "" : "bad"}`} key={k}><span>{k}</span><span>{v}</span></div>)}
+      {rows.length ? <div className="metrics">{rows.map(([k, v, ok]) => <span className={ok ? "" : "bad"} key={k} title={v}><small>{k}</small><b>{v}</b></span>)}</div> : null}
       {history.length ? (
-        <div className="hist">{history.map((h) => <span key={h.ts} className={h.pass ? "ok" : "bad"} title={`${h.mode} · ${new Date(h.ts).toLocaleTimeString("en-IN")}`}>{h.mode[0].toUpperCase()}</span>)}</div>
+        <div className="hist" aria-label="Last runs">{history.map((h) => <span key={h.ts} className={h.pass ? "ok" : "bad"} title={`${h.pass ? "pass" : "fail"} · ${h.mode} · ${new Date(h.ts).toLocaleTimeString("en-IN")}`}>{h.mode[0].toUpperCase()}</span>)}</div>
       ) : null}
     </div>
+  );
+}
+
+// Policies, payees and inbox share one card. Panels stay mounted so Gmail sync keeps running on any tab.
+function Tabs({ data, items }: { data: Data; items: Item[] }) {
+  const [tab, setTab] = useState<"policies" | "payees" | "inbox">("policies");
+  const tabs = [["policies", "Policies", data.policies.length], ["payees", "Payees", data.vendors.length], ["inbox", "Inbox", data.inbox.length]] as const;
+  return (
+    <div className="card tabs">
+      <div className="tablist" role="tablist">
+        {tabs.map(([id, label, n]) => <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}<i>{n}</i></button>)}
+      </div>
+      <div className="panel" role="tabpanel" hidden={tab !== "policies"}><Policies policies={data.policies} items={items} /></div>
+      <div className="panel" role="tabpanel" hidden={tab !== "payees"}><Payees vendors={data.vendors} /></div>
+      <div className="panel" role="tabpanel" hidden={tab !== "inbox"}><Inbox inbox={data.inbox} /></div>
+    </div>
+  );
+}
+
+// The policy set Failproof AI loads from .failproofai/policies, with this run's decisions per policy.
+function Policies({ policies, items }: { policies: Policy[]; items: Item[] }) {
+  const tally = new Map<string, Partial<Record<Decision, number>>>();
+  for (const { e } of items) {
+    if (e.kind !== "verdict" || !e.policy || !e.decision) continue;
+    const t = tally.get(e.policy) ?? {};
+    t[e.decision] = (t[e.decision] ?? 0) + 1;
+    tally.set(e.policy, t);
+  }
+  return (
+    <>
+      <div className="crud-head"><span className="lbl">Checked at every tool call</span><a className="ext" href="http://localhost:8020" target="_blank" rel="noreferrer" title="Run `failproofai` to start the local dashboard, then Policies → Activity">Failproof activity ↗</a></div>
+      {policies.map((p) => {
+        const t = tally.get(p.name) ?? {};
+        return (
+          <div className="pol" key={p.name}>
+            <span><b>{short(p.name)}</b><small>{p.description}</small></span>
+            <span className="tally">
+              {t.allow ? <i className="allow">{t.allow} ✓</i> : null}
+              {t["would-deny"] ? <i className="would-deny">{t["would-deny"]} would block</i> : null}
+              {t.deny ? <i className="deny">{t.deny} ✗</i> : null}
+            </span>
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -295,8 +351,8 @@ function Payees({ vendors }: { vendors: Vendor[] }) {
     </div>
   );
   return (
-    <div className="board crud payees">
-      <div className="crud-head"><span className="lbl">Approved payees</span><button onClick={() => open()} aria-label="Add payee"><Plus size={16} /></button></div>
+    <>
+      <div className="crud-head"><span className="lbl">Read by payee-in-vendor-master</span><button onClick={() => open()} aria-label="Add payee"><Plus size={16} /></button></div>
       {edit === "" ? editor : null}
       {vendors.map((v) => edit === v.upi ? <div key={v.upi}>{editor}</div> : (
         <div className="crud-row" key={v.upi}>
@@ -305,7 +361,7 @@ function Payees({ vendors }: { vendors: Vendor[] }) {
           <button onClick={() => send(`/api/vendors?upi=${encodeURIComponent(v.upi)}`, "DELETE")} aria-label={`Delete ${v.name}`}><Trash2 size={15} /></button>
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -346,9 +402,9 @@ function Inbox({ inbox }: { inbox: Email[] }) {
     </div>
   );
   return (
-    <div className="board crud inbox">
+    <>
       <div className="crud-head">
-        <span className="lbl">Inbox · untrusted</span>
+        <span className="lbl untrusted">Untrusted · never authorizes</span>
         <span className="gm">
           <button className={`gmail ${live ? "on" : ""}`} onClick={() => setLive(!live)} aria-pressed={live} title="Pull the newest payment emails from Gmail every 15 s">Gmail{live ? " ●" : ""}</button>
           <button onClick={() => open()} aria-label="Add email"><Plus size={16} /></button>
@@ -363,34 +419,45 @@ function Inbox({ inbox }: { inbox: Email[] }) {
           <button onClick={() => send(`/api/inbox?id=${encodeURIComponent(m.id)}`, "DELETE")} aria-label={`Delete ${m.subject}`}><Trash2 size={15} /></button>
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
-function PayBoard({ p }: { p: Payout }) {
-  const stamp = { checking: "CHECKING", blocked: "BLOCKED", paid: "PAID", lost: "LOST" }[p.status];
+const STAMP = { checking: "Checking", blocked: "Blocked", paid: "Paid", lost: "Lost" };
+
+function Slip({ p }: { p: Payout }) {
   const budget = budgetAmount(p.human);
+  // Failproof's deny reason is also the agent's instruction: first sentence is the why, the rest tells the agent what to do.
+  const [why, ...rest] = (p.reason ?? "").split(/(?<=\.)\s+/);
+  const told = rest.filter((r) => !r.startsWith("It came from")).join(" ");
   return (
-    <div className={`pay ${p.status}`}>
-      <div className="stamp">{stamp}</div>
+    <article className={`slip ${p.status}`} title={p.command ? `Failproof saw: ${p.command}` : undefined}>
+      <span className="stamp">{STAMP[p.status]}</span>
       <div className="body">
-        <div className="amt">{inr(p.amount)}</div>
-        <div className="who">→ {p.to}{p.memo ? ` · ${p.memo}` : ""}</div>
+        <div className="top"><b className="amt">{inr(p.amount)}</b><code className="to">→ {p.to}{p.memo ? ` · ${p.memo}` : ""}</code></div>
         {p.status === "blocked" || p.status === "lost" ? (
-          <div className="why">
-            {p.source ? <><Mail size={16} />Introduced by <b>{p.source}</b>. </> : null}{p.status === "lost" ? "Failproof would have blocked this." : p.source ? "Not an approved payee." : p.reason}
-          </div>
+          <p className="why bad">
+            {p.source ? <><Mail size={15} /> From <b>{p.source}</b>. </> : null}{why}{p.status === "lost" ? " Failproof would have blocked this." : ""}
+          </p>
         ) : p.human || p.vendor ? (
-          <div className="why">
-            {budget ? <><User size={16} /> Within the {budget} you approved</> : null}
+          <p className="why">
+            {budget ? <><User size={15} /> Within the {budget} you approved</> : null}
             {budget && p.vendor ? " · " : null}
-            {p.vendor ? <><BadgeCheck size={16} /> {p.vendor}</> : null}
-          </div>
+            {p.vendor ? <><BadgeCheck size={15} /> {p.vendor}</> : null}
+          </p>
         ) : null}
-        {p.checks ? (
-          <div className="pol"><ShieldCheck size={14} /> Failproof AI · {p.policy ?? `${p.checks} policy checks passed`}</div>
+        {p.status === "blocked" && told ? <p className="told"><Bot size={14} /> Failproof told the agent: {told}</p> : null}
+        {p.checks.length ? (
+          <ul className="checks" aria-label="Failproof AI policy decisions">
+            {p.checks.map((c) => <li key={c.policy} className={c.decision}>{c.decision === "allow" ? <Check size={12} /> : c.decision === "deny" ? <X size={12} /> : <TriangleAlert size={12} />}{short(c.policy)}</li>)}
+          </ul>
         ) : null}
       </div>
-    </div>
+    </article>
   );
+}
+
+// A policy decision with no payout behind it: the agent sandbox, or a command that names no payee.
+function Note({ p }: { p: Payout }) {
+  return <div className="note"><ShieldCheck size={16} /><span><b>{short(p.policy ?? "")}</b> {p.reason}</span></div>;
 }
