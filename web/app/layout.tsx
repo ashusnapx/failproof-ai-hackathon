@@ -8,14 +8,14 @@ const mono = JetBrains_Mono({ variable: "--font-data", subsets: ["latin"], weigh
 const kannada = Noto_Sans_Kannada({ variable: "--font-kannada", subsets: ["kannada"], weight: ["700", "800"] });
 
 export const metadata: Metadata = {
-  title: "Who Said So? · Failproof Treasury",
-  description: "An AI accounts-payable agent that may only pay what a human authorized in words. Every UPI payout checked by Failproof AI.",
+  title: "TruePe · Who Said So?",
+  description: "TruePe lets AI agents pay only what a human authorized in words. Every UPI payout checked at the tool call, built on Failproof AI.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-IN" className={`${bungee.variable} ${work.variable} ${mono.variable} ${kannada.variable}`}>
-      <body className="h-screen flex flex-col overflow-hidden">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

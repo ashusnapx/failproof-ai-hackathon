@@ -28,7 +28,7 @@ body { background: var(--wall); color: #eee; font: 15px/1.4 var(--font-body), sy
 :focus-visible { outline: 3px solid var(--sign); outline-offset: 3px; }
 * { scrollbar-width: thin; scrollbar-color: #3a352c transparent; }
 
-.A { flex: 1; min-height: 0; padding: 28px; display: grid; grid-template-columns: 1.55fr 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 22px; }
+.A { height: 100vh; overflow: hidden; padding: 28px; display: grid; grid-template-columns: 1.55fr 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 22px; }
 .A .board { border-radius: 6px; padding: 18px 22px; position: relative; box-shadow: inset 0 0 0 4px rgba(0,0,0,.18), 0 6px 0 rgba(0,0,0,.35); }
 .A .lbl { font: 400 13px var(--font-board); letter-spacing: .04em; opacity: .85; }
 
@@ -102,3 +102,67 @@ body { background: var(--wall); color: #eee; font: 15px/1.4 var(--font-body), sy
 .A .said { background: var(--cream); color: var(--cream-ink); }
 .A .said q { display: block; font: 400 24px/1.15 var(--font-board); margin-top: 8px; quotes: "“" "”"; }
 .A .said q.none { quotes: none; opacity: .5; }
+
+/* ---------- TruePe landing (same signboard world as /live) ---------- */
+.L { max-width: 1240px; margin: 0 auto; padding: 28px 28px 60px; display: grid; gap: 56px; }
+.L h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; font: 400 36px/1.05 var(--font-board); color: var(--sign); }
+.L .btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 5px; font: 400 18px var(--font-board); text-decoration: none; transition: transform .15s var(--ease-out), filter .2s; }
+.L .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.L .btn.red { background: var(--danger); color: #fff; box-shadow: 0 8px 18px -8px rgba(140,0,20,.9); }
+.L .btn.ink { background: var(--ink); color: var(--sign); }
+.L .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: stretch; }
+.L .sign { background: var(--sign); color: var(--ink); border-radius: 8px; padding: 34px 36px; box-shadow: inset 0 0 0 5px rgba(0,0,0,.16), 0 8px 0 rgba(0,0,0,.35); display: flex; flex-direction: column; justify-content: center; }
+.L .sign .kn { font: 800 24px var(--font-kannada); }
+.L .sign h1 { margin: 6px 0 10px; font: 400 clamp(64px, 9vw, 112px)/0.95 var(--font-board); letter-spacing: -0.01em; }
+.L .sign .tag { margin: 0 0 26px; font: 700 26px/1.2 var(--font-body); max-width: 18ch; }
+.L .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.L .proof { display: grid; gap: 16px; align-content: center; }
+.L .proof .caption { margin: 0; color: var(--muted); font-size: 14px; }
+.L .pay { display: grid; grid-template-columns: 150px 1fr; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
+.L .stamp { display: grid; place-items: center; font: 400 26px/1 var(--font-board); color: #fff; padding: 14px; }
+.L .paid .stamp { background: var(--enamel); }
+.L .blocked .stamp { background: var(--danger); }
+.L .pay .body { background: var(--cream); color: var(--cream-ink); padding: 14px 18px; }
+.L .pay .amt { font: 400 30px/1 var(--font-board); }
+.L .pay .who { font: 500 15px var(--font-data); margin-top: 4px; }
+.L .pay .why { margin-top: 8px; font-size: 14px; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; border-left: 5px solid; }
+.L .paid .why { border-color: var(--enamel); background: var(--enamel-2); }
+.L .blocked .why { border-color: var(--danger); background: var(--danger-2); }
+.L .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.L .step { border-radius: 6px; padding: 22px; box-shadow: 0 6px 0 rgba(0,0,0,.35); display: grid; gap: 8px; align-content: start; }
+.L .step h3 { margin: 0; font: 400 22px/1.1 var(--font-board); }
+.L .step p { margin: 0; font-size: 16px; }
+.L .step.cream { background: var(--cream); color: var(--cream-ink); }
+.L .step.wall { background: #2a2620; color: #eee; }
+.L .step.sign { background: var(--sign); color: var(--ink); }
+.L .step.enamel { background: var(--enamel); color: #fff; }
+.L .who .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.L .whocard { display: grid; gap: 6px; padding: 18px; border-radius: 6px; background: #2a2620; }
+.L .whocard svg { color: var(--sign); }
+.L .whocard b { font-size: 18px; }
+.L .whocard span { color: #cfc6b2; font-size: 15px; }
+.L .table { border-radius: 6px; overflow: hidden; box-shadow: 0 6px 0 rgba(0,0,0,.35); }
+.L .tr { display: grid; grid-template-columns: 1.1fr 1.6fr 1.6fr; gap: 16px; padding: 14px 18px; background: var(--cream); color: var(--cream-ink); border-top: 1px solid #d8ccb0; font-size: 15px; }
+.L .tr span { display: grid; gap: 2px; }
+.L .tr small { color: #6b604d; font-size: 13px; }
+.L .tr.th { background: var(--ink); color: var(--sign); font: 400 15px var(--font-board); border: 0; }
+.L .tr > span:last-child { color: #0b5a2d; font-weight: 600; }
+.L .wins { margin-top: 18px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.L .win { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; padding: 16px 18px; border-radius: 6px; background: var(--enamel); color: #fff; }
+.L .win b { font: 400 18px var(--font-board); }
+.L .win span { grid-column: 2; font-size: 15px; color: #dff3e6; }
+.L .incidents .inc { display: grid; grid-template-columns: 140px 1fr; gap: 16px; padding: 14px 0; border-top: 2px dashed #3a352c; font-size: 18px; }
+.L .incidents .inc b { font: 400 18px var(--font-board); color: var(--danger); }
+.L .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-top: 20px; border-top: 2px dashed #3a352c; color: var(--muted); }
+.L .foot b { color: var(--sign); }
+@media (max-width: 900px) { .L .hero, .L .steps, .L .who .grid, .L .wins { grid-template-columns: 1fr; } .L .tr { grid-template-columns: 1fr; } }
+
+/* TruePe logo */
+.logo { display: inline-flex; align-items: center; gap: .35em; font-family: var(--font-board); line-height: 1; }
+.logo svg { flex-shrink: 0; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+.L .sign .mark { margin-bottom: 4px; }
+.A .shopname .brand { display: flex; align-items: center; gap: 16px; }
+.A .fp { color: inherit; font-weight: 700; text-underline-offset: 3px; }
+.A .pay .why, .L .pay .why { display: block; }
+.A .pay .why svg, .L .pay .why svg { display: inline; vertical-align: -3px; margin-right: 4px; }
+.L .sign .mark { margin-bottom: 12px; }
