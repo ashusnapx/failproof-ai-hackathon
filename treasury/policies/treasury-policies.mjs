@@ -91,9 +91,10 @@ function introducedBy(dir, upi) {
   return null;
 }
 
-function decide(dir, policy, pay, verdict) {
+// hard: the kill switch denies even in observe mode.
+function decide(dir, policy, pay, verdict, hard = false) {
   const mode = readJson(join(dir, "state", "mode.json"), { mode: "enforce" }).mode;
-  const decision = verdict.ok ? "allow" : mode === "observe" ? "would-deny" : "deny";
+  const decision = verdict.ok ? "allow" : mode === "observe" && !hard ? "would-deny" : "deny";
   try {
     appendFileSync(
       join(dir, "state", "events.jsonl"),
@@ -106,8 +107,59 @@ function decide(dir, policy, pay, verdict) {
 }
 
 customPolicies.add({
+  name: "treasury-kill-switch",
+  description: "A human can freeze every agent payout instantly; nothing moves while frozen",
+  category: "Payments",
+  defaultEnabled: true,
+  match: { events: ["PreToolUse"] },
+  fn: async (ctx) => {
+    if (ctx.toolName !== "Bash") return allow();
+    const dir = treasuryDir(ctx);
+    const pays = payments(String(ctx.toolInput?.command ?? ""));
+    if (!dir || pays.length === 0) return allow();
+    if (!readJson(join(dir, "state", "freeze.json"), { frozen: false }).frozen) return allow();
+    const verdict = {
+      ok: false,
+      reason: "Payouts are frozen by a human (kill switch). Do not retry; tell the human what is pending.",
+      provenance: { by: "human", text: "Kill switch pressed" },
+    };
+    return decide(dir, "treasury-kill-switch", pays[0], verdict, true) ?? allow();
+  },
+});
+
+customPolicies.add({
+  name: "treasury-no-duplicate-invoice",
+  description: "An invoice is paid once: the same invoice number, or the same payee and amount, cannot be paid twice",
+  category: "Payments",
+  defaultEnabled: true,
+  match: { events: ["PreToolUse"] },
+  fn: async (ctx) => {
+    if (ctx.toolName !== "Bash") return allow();
+    const dir = treasuryDir(ctx);
+    const pays = payments(String(ctx.toolInput?.command ?? ""));
+    if (!dir || pays.length === 0) return allow();
+    const paid = readJson(join(dir, "state", "ledger.json"), { payments: [] }).payments;
+    for (const pay of pays) {
+      const dup = paid.find((p) => (pay.memo && p.memo === pay.memo) || (p.to === pay.to && p.amount === pay.amount));
+      if (!dup) continue;
+      const at = new Date(dup.ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const verdict = {
+        ok: false,
+        reason: `${dup.memo || "This invoice"} was already paid (${inr(dup.amount)} to ${dup.to} at ${at}). Duplicate payouts are refused.`,
+        provenance: { by: "ledger", text: `paid at ${at}` },
+      };
+      const blocked = decide(dir, "treasury-no-duplicate-invoice", pay, verdict);
+      if (blocked) return blocked;
+    }
+    return allow();
+  },
+});
+
+customPolicies.add({
   name: "treasury-payee-in-vendor-master",
   description: "UPI payouts only to payees in the vendor master; an email cannot add or change a payee",
+  category: "Payments",
+  defaultEnabled: true,
   match: { events: ["PreToolUse"] },
   fn: async (ctx) => {
     if (ctx.toolName !== "Bash") return allow();
@@ -136,6 +188,8 @@ customPolicies.add({
 customPolicies.add({
   name: "treasury-spend-within-human-budget",
   description: "Total spend must stay inside a budget the human typed; amounts read from tools never authorize spend",
+  category: "Payments",
+  defaultEnabled: true,
   match: { events: ["PreToolUse"] },
   fn: async (ctx) => {
     if (ctx.toolName !== "Bash") return allow();

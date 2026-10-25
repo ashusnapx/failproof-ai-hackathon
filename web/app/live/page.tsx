@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Check, Mail, Pencil, Play, Plus, Trash2, User, X } from "lucide-react";
+import { BadgeCheck, Check, Mail, Pencil, Play, Plus, ShieldCheck, Snowflake, Trash2, User, X } from "lucide-react";
 import { Mark } from "../logo";
 
 type Mode = "observe" | "enforce";
@@ -67,17 +67,19 @@ function reduce(s: State, e: Ev): State {
 type Payout = {
   key: string; to: string; amount: number; memo: string;
   status: "checking" | "blocked" | "paid" | "lost";
-  human?: string; vendor?: string; source?: string; reason?: string;
+  human?: string; vendor?: string; source?: string; reason?: string; policy?: string; checks: number;
 };
 function payouts(items: Item[]): Payout[] {
   const map = new Map<string, Payout>();
   for (const { e, lost } of items) {
     if (e.kind !== "verdict" && e.kind !== "executed") continue;
     const key = `${e.to}|${e.amount}`;
-    const p = map.get(key) ?? { key, to: e.to ?? "", amount: e.amount ?? 0, memo: "", status: "checking" as const };
+    const p = map.get(key) ?? { key, to: e.to ?? "", amount: e.amount ?? 0, memo: "", status: "checking" as const, checks: 0 };
     if (e.memo) p.memo = e.memo;
     if (e.kind === "executed") p.status = lost ? "lost" : "paid";
     else {
+      p.checks++;
+      if (e.decision !== "allow" && !p.policy) p.policy = e.policy;
       const by = e.provenance?.by;
       if (by === "human") p.human = e.provenance?.text;
       if (by === "vendor-master") p.vendor = e.provenance?.text;
@@ -135,7 +137,7 @@ export default function Page() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [budget, setBudget] = useState("2,00,000");
-  const [data, setData] = useState<{ vendors: Vendor[]; inbox: Email[] }>({ vendors: [], inbox: [] });
+  const [data, setData] = useState<{ vendors: Vendor[]; inbox: Email[]; frozen: boolean }>({ vendors: [], inbox: [], frozen: false });
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,7 +145,7 @@ export default function Page() {
     es.onmessage = (m) => {
       try {
         const e = JSON.parse(m.data);
-        if (e.kind === "data") setData({ vendors: e.vendors, inbox: e.inbox });
+        if (e.kind === "data") setData({ vendors: e.vendors, inbox: e.inbox, frozen: !!e.frozen });
         else dispatch(e);
       } catch { /* ignore a malformed line */ }
     };
@@ -197,11 +199,15 @@ export default function Page() {
           <button className="pill run" onClick={start} disabled={busy}>
             <Play size={16} fill="currentColor" />{busy ? "Live" : "Run"}
           </button>
+          <button className={`pill freeze ${data.frozen ? "on" : ""}`} onClick={() => send("/api/freeze", "POST", { frozen: !data.frozen })} aria-pressed={data.frozen}>
+            <Snowflake size={16} />{data.frozen ? "Frozen" : "Freeze"}
+          </button>
           <span className="kn">ಯಾರು ಹೇಳಿದರು?</span>
         </div>
       </div>
 
       <div className="feed" ref={feedRef}>
+        {data.frozen ? <div className="frozen"><Snowflake size={22} /> All payouts frozen by a human</div> : null}
         <div className={`now ${busy ? "on" : ""}`}>{error || now || "Press Run."}</div>
         {list.map((p) => <PayBoard key={p.key} p={p} />)}
       </div>
@@ -316,7 +322,7 @@ function PayBoard({ p }: { p: Payout }) {
         <div className="who">→ {p.to}{p.memo ? ` · ${p.memo}` : ""}</div>
         {p.status === "blocked" || p.status === "lost" ? (
           <div className="why">
-            <Mail size={16} /> {p.source ? <>Introduced by <b>{p.source}</b>.</> : null} {p.status === "lost" ? "Failproof would have blocked this." : p.source ? "Not an approved payee." : p.reason}
+            {p.source ? <><Mail size={16} />Introduced by <b>{p.source}</b>. </> : null}{p.status === "lost" ? "Failproof would have blocked this." : p.source ? "Not an approved payee." : p.reason}
           </div>
         ) : p.human || p.vendor ? (
           <div className="why">
@@ -324,6 +330,9 @@ function PayBoard({ p }: { p: Payout }) {
             {budget && p.vendor ? " · " : null}
             {p.vendor ? <><BadgeCheck size={16} /> {p.vendor}</> : null}
           </div>
+        ) : null}
+        {p.checks ? (
+          <div className="pol"><ShieldCheck size={14} /> Failproof AI · {p.policy ?? `${p.checks} policy checks passed`}</div>
         ) : null}
       </div>
     </div>

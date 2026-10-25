@@ -1,5 +1,5 @@
 import { statSync } from "node:fs";
-import { OPENING_BALANCE, ensureState, eventsPath, isRunning, listInbox, listVendors, readLedger, readSince, readVendors } from "@/lib/treasury";
+import { OPENING_BALANCE, ensureState, eventsPath, isFrozen, isRunning, listInbox, listVendors, readLedger, readSince, readVendors } from "@/lib/treasury";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
           const ledger = JSON.stringify({ kind: "ledger", running: isRunning(), ...readLedger() });
           if (ledger !== lastLedger) send((lastLedger = ledger));
           // CRUD changes (from any tab or editor) reach every screen within one tick
-          const data = JSON.stringify({ kind: "data", vendors: listVendors(), inbox: listInbox() });
+          const data = JSON.stringify({ kind: "data", vendors: listVendors(), inbox: listInbox(), frozen: isFrozen() });
           if (data !== lastData) send((lastData = data));
         } catch {
           // ledger mid-write by treasury/bin/pay; next tick retries

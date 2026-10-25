@@ -54,6 +54,14 @@ export function deleteVendor(upi: string | null) {
   return null;
 }
 
+// Kill switch: treasury-kill-switch denies every payout while state/freeze.json says frozen.
+const freezePath = path.join(state, "freeze.json");
+export const isFrozen = () => existsSync(freezePath) && JSON.parse(readFileSync(freezePath, "utf8")).frozen === true;
+export function setFrozen(frozen: boolean) {
+  mkdirSync(state, { recursive: true });
+  writeFileSync(freezePath, JSON.stringify({ frozen, ts: Date.now() }));
+}
+
 export function listInbox(): Email[] {
   return readdirSync(inboxDir).filter((f) => ID.test(f)).sort().map((id) => {
     const raw = readFileSync(path.join(inboxDir, id), "utf8");
