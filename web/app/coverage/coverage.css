@@ -23,3 +23,4 @@
 .cov .caption { margin: 0; color: var(--muted); font-size: 14px; }
 @media (max-width: 900px) { .cov .tr { grid-template-columns: 1fr; } }
 .cov .covhead h1 { color: var(--ink); }
+.cov .caption a { color: var(--sign); }

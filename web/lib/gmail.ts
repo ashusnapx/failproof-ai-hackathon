@@ -14,7 +14,8 @@ const oneLine = (s: string) => s.replace(/[\r\n]+/g, " ").slice(0, 160);
 export async function syncGmail() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "");
-  if (!user || !pass) return { error: "Set GMAIL_USER and GMAIL_APP_PASSWORD in web/.env.local" };
+  if (!user || !pass)
+    return { error: `web/.env.local is missing ${[!user && "GMAIL_USER", !pass && "GMAIL_APP_PASSWORD"].filter(Boolean).join(" and ")} (restart npm run dev after editing)` };
   const client = new ImapFlow({ host: "imap.gmail.com", port: 993, secure: true, auth: { user, pass }, logger: false });
   await client.connect();
   const found: { uid: number; from: string; subject: string; text: string }[] = [];

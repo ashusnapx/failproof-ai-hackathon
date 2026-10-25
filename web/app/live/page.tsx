@@ -189,7 +189,7 @@ export default function Page() {
           <Link href="/" aria-label="TruePe home"><Mark size={64} /></Link>
           <div>
             <h1>TruePe · Dosa Labs</h1>
-            <small>27th Main, Sector 1, HSR Layout · AP agent on Claude Code · enforced by <a className="fp" href="https://app.befailproof.ai" target="_blank" rel="noreferrer">Failproof AI ↗</a></small>
+            <small>27th Main, Sector 1, HSR Layout · AP agent on Claude Code · enforced by <a className="fp" href="https://befailproof.ai" target="_blank" rel="noreferrer">Failproof AI ↗</a> · <Link className="fp" href="/coverage">Coverage</Link></small>
           </div>
         </div>
         <div className="modes">

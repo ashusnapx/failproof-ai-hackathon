@@ -97,6 +97,11 @@ export default function Coverage() {
         </section>
       ))}
       <p className="caption">Sources: OWASP Top 10 for LLM Applications 2025 (genai.owasp.org), OWASP Top 10 for Agentic Applications. “Blocked live” rows are Failproof AI policies in treasury/policies/treasury-policies.mjs, self-tested and run through Claude Code.</p>
+      <p className="caption">
+        Guardrails powered by <a href="https://befailproof.ai" target="_blank" rel="noreferrer">Failproof AI</a> ·{" "}
+        <Link href="/live">Live demo</Link> · <a href="https://docs.befailproof.ai" target="_blank" rel="noreferrer">Failproof AI docs</a> ·{" "}
+        <a href="https://github.com/ashusnapx/failproof-ai-hackathon" target="_blank" rel="noreferrer">GitHub</a>
+      </p>
     </div></main>
   );
 }
