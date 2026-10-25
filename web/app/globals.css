@@ -173,3 +173,16 @@ body { background: var(--wall); color: #eee; font: 15px/1.4 var(--font-body), sy
 .A .pill.freeze.on { background: #0b3d6b; color: #e8f4ff; animation: pulse 1.2s infinite; }
 .A .frozen { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 6px; background: #0b3d6b; color: #e8f4ff; font: 400 22px var(--font-board); box-shadow: 0 6px 0 rgba(0,0,0,.35); }
 .A .pay .pol { margin-top: 8px; display: flex; align-items: center; gap: 6px; font: 600 12px var(--font-data); color: #6b604d; }
+
+/* evals board */
+.A .evals { background: #f3ead7; color: var(--cream-ink); }
+.A .evals .verdict { font: 400 14px var(--font-board); padding: 4px 10px; border-radius: 4px; background: #d9cdb0; }
+.A .evals .verdict.ok { background: var(--enamel); color: #fff; }
+.A .evals .verdict.bad { background: var(--danger); color: #fff; }
+.A .erow { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px dashed rgba(0,0,0,.2); font-size: 15px; }
+.A .erow span:last-child { font: 600 14px var(--font-data); text-align: right; }
+.A .erow.bad span:last-child { color: var(--danger); }
+.A .hist { display: flex; gap: 5px; margin-top: 10px; }
+.A .hist span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 4px; font: 400 12px var(--font-board); color: #fff; }
+.A .hist .ok { background: var(--enamel); }
+.A .hist .bad { background: var(--danger); }

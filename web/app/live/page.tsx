@@ -56,7 +56,7 @@ function reduce(s: State, e: Ev): State {
     }
     case "human":
       return { ...s, items: push(), seq: s.seq + 1, runMode: e.mode ?? s.runMode };
-    case "agent": case "tool": case "result": case "done": case "stderr":
+    case "agent": case "tool": case "result": case "done": case "stderr": case "eval":
       return { ...s, items: push(), seq: s.seq + 1 };
     default:
       return s;
@@ -137,7 +137,7 @@ export default function Page() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [budget, setBudget] = useState("2,00,000");
-  const [data, setData] = useState<{ vendors: Vendor[]; inbox: Email[]; frozen: boolean }>({ vendors: [], inbox: [], frozen: false });
+  const [data, setData] = useState<{ vendors: Vendor[]; inbox: Email[]; frozen: boolean; history: Card[] }>({ vendors: [], inbox: [], frozen: false, history: [] });
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Page() {
     es.onmessage = (m) => {
       try {
         const e = JSON.parse(m.data);
-        if (e.kind === "data") setData({ vendors: e.vendors, inbox: e.inbox, frozen: !!e.frozen });
+        if (e.kind === "data") setData({ vendors: e.vendors, inbox: e.inbox, frozen: !!e.frozen, history: e.history ?? [] });
         else dispatch(e);
       } catch { /* ignore a malformed line */ }
     };
@@ -220,6 +220,7 @@ export default function Page() {
           <div className="row"><span>Blocked by Failproof</span><span>{inr0(s.totals.saved)}</span></div>
           <div className={`row ${s.totals.lost ? "lost" : ""}`}><span>Lost to fraud</span><span>{inr0(s.totals.lost)}</span></div>
         </div>
+        <Evals card={(s.items.findLast((i) => i.e.kind === "eval")?.e as unknown as Card) ?? null} history={data.history} running={busy} />
         <div className="board said">
           <div className="lbl">Who said so? The human:</div>
           {said ? <q>{said}</q> : <q className="none">Nobody yet.</q>}
@@ -232,6 +233,36 @@ export default function Page() {
 }
 
 type Email = { id: string; from: string; subject: string; body: string };
+type Card = {
+  ts: number; mode: string; pass: boolean; fraudAttempts: number; fraudBlocked: number; fraudLost: number;
+  legit: number; legitPaid: number; wrongAmount: number; overBlocks: number; hallucinations: string[];
+  retriesAfterBlock: number; cost: number; ms: number;
+};
+
+// Deterministic scorecard of the last run vs treasury/evals/ground-truth.json, plus pass/fail history.
+function Evals({ card, history, running }: { card: Card | null; history: Card[]; running: boolean }) {
+  const c = running ? null : card ?? history.at(-1) ?? null;
+  const rows: [string, string, boolean][] = c ? [
+    ["Fraud caught", `${c.fraudBlocked}/${c.fraudAttempts}${c.fraudLost ? ` · ${inr0(c.fraudLost)} lost` : ""}`, c.fraudLost === 0],
+    ["Accuracy", `${c.legitPaid}/${c.legit} paid right${c.wrongAmount ? ` · ${c.wrongAmount} wrong amount` : ""}`, c.wrongAmount === 0],
+    ["Hallucinations", c.hallucinations.length ? c.hallucinations.join(", ") : "0", c.hallucinations.length === 0],
+    ["Over-blocks", String(c.overBlocks), c.overBlocks === 0],
+    ["Retries after block", String(c.retriesAfterBlock), c.retriesAfterBlock === 0],
+    ["Latency · cost", `${(c.ms / 1000).toFixed(1)} s · $${c.cost.toFixed(3)}`, true],
+  ] : [];
+  return (
+    <div className="board evals">
+      <div className="crud-head">
+        <span className="lbl">Evals · last run</span>
+        {c ? <span className={`verdict ${c.pass ? "ok" : "bad"}`}>{c.pass ? "PASS" : "FAIL"} · {c.mode}</span> : <span className="verdict">{running ? "scoring…" : "no runs"}</span>}
+      </div>
+      {rows.map(([k, v, ok]) => <div className={`erow ${ok ? "" : "bad"}`} key={k}><span>{k}</span><span>{v}</span></div>)}
+      {history.length ? (
+        <div className="hist">{history.map((h) => <span key={h.ts} className={h.pass ? "ok" : "bad"} title={`${h.mode} · ${new Date(h.ts).toLocaleTimeString("en-IN")}`}>{h.mode[0].toUpperCase()}</span>)}</div>
+      ) : null}
+    </div>
+  );
+}
 
 async function send(url: string, method: string, body?: object) {
   const r = await fetch(url, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });

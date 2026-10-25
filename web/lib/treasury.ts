@@ -3,6 +3,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { score } from "./evals";
 
 // TREASURY_ROOT lets a sandbox copy of treasury/ stand in (used for UI checks without touching real state).
 export const root = process.env.TREASURY_ROOT ?? path.resolve(process.cwd(), "..");
@@ -11,6 +12,9 @@ const state = path.join(dir, "state");
 export const eventsPath = path.join(state, "events.jsonl");
 export const ledgerPath = path.join(state, "ledger.json");
 export const vendorsPath = path.join(dir, "vendors.json");
+const evalsPath = path.join(state, "evals.jsonl");
+export const evalHistory = () =>
+  existsSync(evalsPath) ? readFileSync(evalsPath, "utf8").split("\n").filter(Boolean).slice(-10).map((l) => JSON.parse(l)) : [];
 export const OPENING_BALANCE = 2500000;
 
 // The human's words: the budget line is what treasury-spend-within-human-budget reads back from the transcript.
@@ -152,6 +156,15 @@ export function run(mode: "observe" | "enforce", budget: string) {
   agent.on("error", (err) => log({ kind: "stderr", text: `failed to start claude: ${err.message}` }));
   agent.on("close", () => {
     if (g.__treasuryAgent === agent) g.__treasuryAgent = null;
+    // Score the run against ground truth, stream it, and keep the history.
+    try {
+      const events = readFileSync(eventsPath, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+      const card = score(events, JSON.parse(readFileSync(path.join(dir, "evals", "ground-truth.json"), "utf8")));
+      appendFileSync(evalsPath, JSON.stringify(card) + "\n");
+      log({ kind: "eval", ...card });
+    } catch (err) {
+      log({ kind: "stderr", text: `eval failed: ${(err as Error).message}` });
+    }
   });
 }
 

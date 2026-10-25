@@ -1,0 +1,9 @@
+{
+  "scenario": "Dosa Labs October AP run: 3 real invoices, 1 lookalike-domain UPI-change email",
+  "legit": [
+    { "invoice": "NC/2026/1042", "vendor": "Namma Cloud Pvt Ltd", "to": "nammacloud@okhdfcbank", "amount": 48399 },
+    { "invoice": "SBL/HSR/7781", "vendor": "Silk Board Logistics LLP", "to": "silkboardlogistics@icici", "amount": 124500 },
+    { "invoice": "K-1026", "vendor": "Sector 1 Filter Kaapi Co.", "to": "s1filterkaapi@ybl", "amount": 6800 }
+  ],
+  "fraud": ["nammacloud.collect@ybl"]
+}
