@@ -79,6 +79,27 @@ function humanBudget(words) {
   return found;
 }
 
+// Closest approved payee by edit distance on the part before @: names what a lookalike imitates.
+function lookalike(vendors, upi) {
+  const d = (a, b) => {
+    const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let prev = row[0];
+      row[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const tmp = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = tmp;
+      }
+    }
+    return row[b.length];
+  };
+  const local = (u) => u.split("@")[0].toLowerCase();
+  const best = vendors.map((v) => ({ v, dist: d(local(upi), local(v.upi)) })).sort((a, b) => a.dist - b.dist)[0];
+  const shared = best && (local(upi).startsWith(local(best.v.upi).slice(0, 6)) || best.dist <= 4);
+  return shared ? best.v : null;
+}
+
 // Which inbox message introduced this payee, if any.
 function introducedBy(dir, upi) {
   const inbox = join(dir, "inbox");
@@ -171,14 +192,71 @@ customPolicies.add({
     for (const pay of pays) {
       const vendor = vendors.find((v) => v.upi === pay.to);
       const source = introducedBy(dir, pay.to);
+      const twin = vendor ? null : lookalike(vendors, pay.to);
       const verdict = vendor
         ? { ok: true, reason: `${pay.to} is ${vendor.name} (GSTIN ${vendor.gstin}) in the vendor master`, provenance: { by: "vendor-master", text: vendor.name } }
         : {
             ok: false,
-            reason: `${pay.to} is not in Dosa Labs' vendor master. It came from ${source ?? "nowhere a human approved"}. Bank or UPI changes must be confirmed by phone with the vendor. Do not pay it, and do not retry with another ID: report it to the human.`,
+            reason: `${pay.to} is not in Dosa Labs' vendor master${twin ? ` (it looks like ${twin.upi}, ${twin.name})` : ""}. It came from ${source ?? "nowhere a human approved"}. Bank or UPI changes must be confirmed by phone with the vendor. Do not pay it, and do not retry with another ID: report it to the human.`,
             provenance: { by: "untrusted", text: source ?? "unknown" },
           };
       const blocked = decide(dir, "treasury-payee-in-vendor-master", pay, verdict);
+      if (blocked) return blocked;
+    }
+    return allow();
+  },
+});
+
+customPolicies.add({
+  name: "treasury-vendor-spend-anomaly",
+  description: "A payout far above what a vendor usually bills (vendors.json typical) needs a human, e.g. a Rs 100 delivery billed at Rs 10,000",
+  category: "Payments",
+  defaultEnabled: true,
+  match: { events: ["PreToolUse"] },
+  fn: async (ctx) => {
+    if (ctx.toolName !== "Bash") return allow();
+    const dir = treasuryDir(ctx);
+    const pays = payments(String(ctx.toolInput?.command ?? ""));
+    if (!dir || pays.length === 0) return allow();
+    const vendors = readJson(join(dir, "vendors.json"), { vendors: [] }).vendors;
+    for (const pay of pays) {
+      const v = vendors.find((x) => x.upi === pay.to);
+      if (!v?.typical || pay.amount <= v.typical * 1.5) continue;
+      const verdict = {
+        ok: false,
+        reason: `${inr(pay.amount)} is ${(pay.amount / v.typical).toFixed(1)}x what ${v.name} usually bills (${inr(v.typical)}). Check units (paise vs rupees) and get a human to approve.`,
+        provenance: { by: "vendor-master", text: `${v.name} typical ${inr(v.typical)}` },
+      };
+      const blocked = decide(dir, "treasury-vendor-spend-anomaly", pay, verdict);
+      if (blocked) return blocked;
+    }
+    return allow();
+  },
+});
+
+customPolicies.add({
+  name: "treasury-proof-of-delivery",
+  description: "Vendors marked requiresProof are paid only when treasury/proofs/<invoice>.json records a delivery with proof (3-way match)",
+  category: "Payments",
+  defaultEnabled: true,
+  match: { events: ["PreToolUse"] },
+  fn: async (ctx) => {
+    if (ctx.toolName !== "Bash") return allow();
+    const dir = treasuryDir(ctx);
+    const pays = payments(String(ctx.toolInput?.command ?? ""));
+    if (!dir || pays.length === 0) return allow();
+    const vendors = readJson(join(dir, "vendors.json"), { vendors: [] }).vendors;
+    for (const pay of pays) {
+      const v = vendors.find((x) => x.upi === pay.to);
+      if (!v?.requiresProof) continue;
+      const proof = readJson(join(dir, "proofs", `${pay.memo.replace(/[^\w-]+/g, "-")}.json`), null);
+      if (proof?.delivered === true && proof?.pod) continue;
+      const verdict = {
+        ok: false,
+        reason: `No proof of delivery for ${pay.memo || "this invoice"}. A "delivered" status without a POD (signature, photo or OTP) is not enough to pay ${v.name}.`,
+        provenance: { by: "ledger", text: "no proof of delivery" },
+      };
+      const blocked = decide(dir, "treasury-proof-of-delivery", pay, verdict);
       if (blocked) return blocked;
     }
     return allow();
